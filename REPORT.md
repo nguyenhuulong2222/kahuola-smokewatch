@@ -1,6 +1,61 @@
-# Kahu Ola SmokeWatch — Report (draft)
+# Kahu Ola SmokeWatch — Report
 
-> Sections marked TODO are filled in Step 5. Evaluation numbers: `eval/results.md`.
+OpenCV AI Competition 2026 (AWS). Code, deploy and evaluation steps: [README.md](README.md).
+All evaluation numbers: [eval/results.md](eval/results.md).
+
+## Problem and users
+
+On 8 August 2023 several wind-driven fires burned on Maui at once, including the Lahaina fire,
+which killed 102 people. Official awareness of each ignition came from 911 calls and
+responders. The satellites that most people know as "fire detectors" are polar orbiters
+(VIIRS, MODIS). They pass over Hawaiʻi a few times a day, so on 8 August the first polar
+detection of the Lahaina afternoon fire came about 7 hours after it was reported.
+
+GOES-18 sees Hawaiʻi every 5 minutes, but at 2 km resolution, and its raw imagery needs an
+expert to read. SmokeWatch watches every scan, finds new thermal anomalies on land, gathers
+evidence with an agent, and asks a **human reviewer** whether to publish a public
+"possible fire" layer.
+
+* **Residents of Maui and Hawaiʻi Island**: a public map layer with an automated satellite
+  estimate. It always carries the disclaimer *"Ước tính tự động từ vệ tinh, không thay thế
+  cảnh báo chính thức"* ("automated satellite estimate, not a substitute for official
+  warnings").
+* **Emergency managers and duty officers** (the reviewer role): a short queue of
+  evidence-cited candidates instead of raw imagery, each one approved or rejected in one click.
+
+It is a second, satellite-based signal next to 911 calls, not a replacement for them or for
+official warnings.
+
+## Architecture
+
+![architecture](docs/architecture.svg)
+
+1. **Ingest:** every 10 min, EventBridge triggers `ScanFunction`. It reads the latest
+   GOES-18 ABI L2 MCMIP scan from NOAA's public bucket (same region, anonymous) and the
+   3-day background frames, cached in the stack's own S3 bucket.
+2. **Perception (OpenCV):** reprojection onto a 0.02° Hawaiʻi grid, background differencing,
+   hotspot and smoke candidates (below).
+3. **Agent:** per candidate, `track_plume` → `query_firms` → review, re-check or dismiss
+   ([agent workflow](docs/agent-workflow.svg), [example trace](docs/agent-trace-example.md)).
+4. **Human in the loop:** `HttpFunction` serves the reviewer page. Only `POST /review` with
+   the reviewer token moves a candidate to the public GeoJSON layer.
+5. **Public page and archive:** the Lahaina case study, a timeline viewer over stored scans,
+   and live status.
+
+## OpenCV 5 implementation
+
+`opencv-python-headless==5.0.0.93`. Every image step runs in OpenCV on NumPy arrays:
+
+| Stage | OpenCV |
+|---|---|
+| Reprojection of the ABI fixed grid to lat/lon | `cv2.remap` (bilinear, per band) |
+| Hotspot clusters | `cv2.dilate`, `cv2.connectedComponentsWithStats` |
+| Smoke mask | `cv2.morphologyEx` (top-hat, open, close), `cv2.GaussianBlur`, `cv2.bilateralFilter`, `cv2.blur` (texture), `cv2.connectedComponents` |
+| Plume geometry | `cv2.findContours`, `cv2.approxPolyDP` → GeoJSON; `cv2.distanceTransform` (hotspot-to-plume distance); `cv2.boundingRect` |
+| Plume motion | `cv2.DISOpticalFlow_create` between consecutive scans; the plume mask is warped and scored by IoU and flow coherence |
+| Land and coast | `cv2.dilate` of the Natural Earth land mask |
+| Rendering | `cv2.applyColorMap` (ΔT in inferno), `cv2.addWeighted`, `cv2.circle`, `cv2.putText`, `cv2.polylines`, `cv2.imencode` (WebP/PNG) |
+| Case-study media | `cv2.VideoWriter` (H.264 MP4) and `cv2.imwriteanimation` (GIF fallback) |
 
 ## Detection method (fire-anchored)
 
@@ -130,20 +185,121 @@ neighbours are +4.8 and +5.0 K, so the contextual threshold rises to 8.9 K. The 
 penalises exactly the small, smeared fires we most want early. Full numbers:
 `eval/results.md`, "Contextual test".
 
-## Evaluation — TODO (full table: eval/results.md)
+## Evaluation
 
-Headline (Lahaina afternoon fire, preliminary until the full eval run): **GOES review 41 min
-after the official first report (00:55Z → 01:36Z), ~6 h before the first polar-orbiter
-detection (MODIS, 07:50Z).** The first thermal anomaly appeared at 01:21Z but in a single scan
-only, so the agent re-checked rather than reviewed (2-scan persistence rule). Timing is measured
-against the first *report*, not against when people first noticed the fire.
+The evaluation replays 148 archived GOES-18 scans (`eval/run_eval.py`, policy `rules`; the
+LLM agent made the same decisions, see "Agent vs rules").
+* **Positive cases:** 7 fires of 8–9 August 2023, with official first-report times. Maui
+  times come from primary sources (fire and police reports, the after-action report).
+  Hawaiʻi Island times come from news.
+* **Negative cases:** 5 days (clear, cloudy, vog ×2, sun glint).
 
-## Limitations — TODO (Step 5), known so far
+Labels and citations are in `eval/cases.yaml`.
 
-* 2 km pixels: small fires (< ~1 ha flaming) may not reach the +6 K threshold.
-* Smoke is supporting evidence only; smoke without a hotspot is not detected.
-* Background needs the 3 previous days; a pixel cloudy in all 9 reference scans has no
-  background and cannot be tested.
-* Volcanic mask suppresses real wildfires inside it (see above).
-* Report times for the Hawaiʻi Island fires are from news (approximate), not primary sources.
-* Eval FIRMS comparison uses S-NPP VIIRS + MODIS (keyless archive); NOAA-20 not included.
+**What is timed:** the first scan where the agent *queued a human review* within the match
+radius of the origin. This is not the first thermal anomaly. It is compared with the official
+first report, and with the first FIRMS detection by **any** polar orbiter (VIIRS S-NPP,
+VIIRS NOAA-20, MODIS Aqua/Terra).
+
+| Fire | First report | First GOES review | vs report | First polar detection | vs first polar |
+|---|---|---|---|---|---|
+| Olinda (Upcountry Maui) | 00:22 HST | 01:21 HST | +59 min | 01:44 HST (VIIRS S-NPP) | 23 min before |
+| Lahaina morning | 06:34 HST | missed | — | 21:50 HST (MODIS) | — |
+| Kula | 11:27 HST | missed | — | 13:45 HST (VIIRS NOAA-20) | — |
+| **Lahaina afternoon** | 14:55 HST | **15:36 HST** | **+41 min** | 21:50 HST (MODIS) | **~6 h before** |
+| Pūlehu–Kīhei (attribution uncertain) | 18:01 HST | 19:41 HST | +1 h 40 min | 21:50 HST (MODIS) | 2 h 09 min before |
+| North Kohala, Hawaiʻi Island | 03:00 HST | 03:41 HST | +41 min | 10:57 HST (MODIS) | ~7 h before |
+| Mauna Kea Resort / Kawaihae, Hawaiʻi Island | 15:00 HST | 15:31 HST | +31 min | 01:25 HST next day (VIIRS S-NPP) | ~10 h before |
+
+**Headline (Lahaina afternoon fire): review 41 min after the official first report, ~6 h
+before the first polar-orbiter detection (MODIS).** The first thermal anomaly appeared at
+15:21 HST in a single scan, so the agent re-checked instead of asking for review (2-scan
+rule). It queued the review at 15:36 HST. Every review came *after* the first official
+report: SmokeWatch is a faster satellite signal than the polar orbiters, not an earlier
+signal than people.
+
+* **Recall:** 5 of 7 fires reviewed. All 5 were reviewed before the first polar-orbiter
+  detection.
+* **Precision:** 207 of 241 reviews fell within a known fire's radius (0.859).
+  * Of the 34 others, 22 have FIRMS vegetation-fire detections within 3 km: the fire spread
+    beyond the radius, or it was an unlisted fire. Counting those as fires gives 0.95.
+  * **12 reviews are uncorroborated** false positives.
+* **Negative days:** 6 of 19 scans produced a false review, mostly Hawaiʻi Island by day on
+  a vog day. Kīlauea's volcanic anomalies were dismissed every time and never reached review.
+
+**Live operation:**
+* Deployed in `us-east-1` since 24 Oct 2026: 1536 MB, a scan every 10 min.
+* In the 24 h to 25 Oct 20:20Z: 84 scans logged, 0 candidates. No fires were burning, so
+  there were no false reviews and no LLM cost.
+* Scan time: 7 s median, 28 s max. NOAA fetch: 4–10 s per scan.
+
+**Running cost (estimate, us-east-1 list prices):**
+* Lambda: 144 scans/day × ~7 s × 1.5 GB ≈ 45 k GB-s/month, about $0.8.
+* S3: about $0.3 (archive kept 90 days, plus PUT requests).
+* NOAA reads: free (public dataset in the same region).
+* LLM (Anthropic API): called only on scans with candidates, $0.016–0.032 per such scan.
+
+## Limitations
+
+* **Missed fires: Lahaina morning and Kula.** Both were small at 2 km pixel scale.
+  * Neither reached the +6 K threshold in the replayed scans: 30 for Lahaina morning, 27
+    for Kula.
+  * The Lahaina morning fire was reported at 06:34 HST and declared contained the same
+    morning.
+  * NOAA-20 VIIRS (375 m) saw Kula at 13:45 HST; GOES did not.
+  * A fire must be large or hot enough to raise a 2 km pixel by several kelvin.
+* **Pūlehu attribution is uncertain.** The hotspot counted as Pūlehu (review 19:41 HST) is
+  2.8 km from the Pūlehu origin and 4.5 km from the Kula origin. Hotspots 3 km from the Kula
+  origin were already present from 17:56 HST, before Pūlehu was reported at 18:01 HST. The
+  review may be the Kula fire spreading rather than Pūlehu, so treat that timing as
+  unconfirmed.
+* **Daytime false positives on Hawaiʻi Island, especially on vog days.**
+  * 12 reviews in the evaluation have no FIRMS corroboration. Most are broad, low-amplitude
+    (+6–12 K) daytime warmings of Hawaiʻi Island on a vog day.
+  * A contextual test removed them, but lost one fire and delayed three, so it is off (see
+    the experiment above).
+  * For now the human reviewer is the filter.
+* **Report times for the Hawaiʻi Island fires come from news coverage**, not primary
+  sources, so their Δ-to-report is approximate. Maui times are from primary reports.
+* **The LLM agent uses the Anthropic API, not Amazon Bedrock.**
+  * On this new AWS account, Bedrock calls to Claude Sonnet 5.5 returned
+    `AccessDeniedException`: the model was not available to the account, and its
+    tokens-per-minute quota (L-94A31E46) was 0.
+  * A quota increase was requested and was still pending at submission.
+  * `BedrockPolicy` is implemented and selectable (`AgentPolicy=bedrock`). The deployed stack
+    runs `AgentPolicy=anthropic`, with the API key in SSM.
+* **The LLM agent is not better than the rules here.** It made the same decision on all 24
+  candidates tested, including all 9 uncorroborated false positives (see "Agent vs rules").
+* **The background needs 3 previous days.** A pixel cloudy in all 9 reference scans has no
+  background and cannot be tested. A land-cover change within 3 days (e.g. a fresh burn
+  scar) shifts the background.
+* **Smoke is supporting evidence only.** At 2 km a plume rarely resolves, and smoke without
+  a hotspot is not detected.
+* **The volcanic mask suppresses real wildfires inside it** (near Volcano village, the Kaʻū
+  desert).
+* **Thresholds are heuristic** (+6 K, 2 of 3 scans), chosen from Lahaina and Olinda pixel
+  values before the full evaluation.
+* **The evaluation set is small:** 7 fires over two days of one event, and 5 negative days.
+* **The public viewer shows only stored days:** live scans for 90 days, reviewed events
+  permanently, and the featured replay. It does not fetch past NOAA data on demand, and
+  replay days show RulePolicy decisions.
+
+## Responsible use
+
+* **Human in the loop by construction.**
+  * The agent's tools cannot publish. Only `POST /review` with the reviewer token (compared
+    in constant time) moves a candidate to the public layer.
+  * Code rails decide what can reach a reviewer at all: `track_plume` has run, the hotspot
+    is in ≥ 2 scans, and it is outside the volcanic mask.
+  * The model's confidence is never a gate.
+* **A disclaimer on every public feature:** "Ước tính tự động từ vệ tinh, không thay thế cảnh
+  báo chính thức". The public page points people to Maui Emergency Management and county
+  alerts.
+* **Honest timing.** Detection time is measured from the official first report, never
+  "before humans", and compared with the earliest polar orbiter of any kind.
+* **Safe failure.** LLM, network or FIRMS errors never stop a scan: the deterministic
+  RulePolicy resolves whatever is left open, and the error is recorded in the trace.
+* **No personal data** is collected or stored. Secrets live in SSM or NoEcho stack
+  parameters, never in code or git.
+* **Not for life-safety decisions on its own.** A 2 km pixel cannot place a fire on a
+  street, and small fires are missed.

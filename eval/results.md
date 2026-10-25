@@ -4,7 +4,7 @@ Generated 2026-10-25T07:45Z · policy `rules` · 148 unique GOES-18 PACUS scans.
 
 ## Time to detection
 
-First GOES scan where the agent queued a human review within the radius of the origin, vs the official first-report time and vs the first FIRMS detection by any polar-orbiting sensor. Polar sensors: NOAA-20 not included (no FIRMS_MAP_KEY; not in the keyless archive); S-NPP VIIRS and MODIS Aqua/Terra from the FIRMS archive. Δ: + = GOES later, − = GOES earlier.
+First GOES scan where the agent queued a human review within the radius of the origin, vs the official first-report time and vs the first FIRMS detection by any polar-orbiting sensor. Polar sensors: NOAA-20 included (FIRMS API, VIIRS_NOAA20_SP); S-NPP VIIRS and MODIS Aqua/Terra from the FIRMS archive. Δ: + = GOES later, − = GOES earlier.
 
 | Fire | Official first report | First thermal anomaly | **First GOES review** | Δ vs report | First polar-orbiter detection (sensor) | **Δ vs first polar** |
 |---|---|---|---|---|---|---|

@@ -76,11 +76,11 @@ def firms_first(cfg_dir: str, origin, radius_km: float, after: dt.datetime) -> d
 
 def ensure_noaa20(archive: str, cfg) -> str:
     """With FIRMS_MAP_KEY, add VIIRS_NOAA20_SP for the event days to the archive dir."""
-    if not os.environ.get("FIRMS_MAP_KEY"):
-        return "NOAA-20 not included (no FIRMS_MAP_KEY; not in the keyless archive)"
     days = sorted({parse_t(e["first_report_utc"]).date() for e in cfg["events"]})
     path = os.path.join(archive, f"noaa20_sp_{days[0]:%Y%m%d}.csv")
-    if not os.path.exists(path):
+    if not os.path.exists(path):   # once fetched, later runs reuse it without the key
+        if not os.environ.get("FIRMS_MAP_KEY"):
+            return "NOAA-20 not included (no FIRMS_MAP_KEY; not in the keyless archive)"
         n = firms.download_area("VIIRS_NOAA20_SP", (-160.6, 18.5, -154.6, 22.6), days[0],
                                 (days[-1] - days[0]).days + 3, path)
         print(f"FIRMS NOAA-20: {n} rows -> {path}", flush=True)

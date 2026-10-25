@@ -164,7 +164,9 @@ reviewer page is at `/review`.
 * **Deep links:** `?date=2023-08-08&t=0136Z` (HST day, UTC time of the scan; `&region=maui`,
   `&play=1`).
 * **Images** are served through `GET /img/<key>`, which redirects to a presigned S3 URL
-  (cached 1 h). The bucket stays private.
+  (cached 1 h). Scan `summary.json` files are returned inline, so the browser's `fetch()`
+  stays same-origin (the bucket has no CORS). Only keys under `archive/`, `events/` and
+  `static/` are served. The bucket stays private.
 * **Limitation:** the viewer shows only days stored by the live scanner and featured events.
   It does not fetch arbitrary past dates from NOAA on demand. The replay days show the
   RulePolicy decisions of the evaluation run.
