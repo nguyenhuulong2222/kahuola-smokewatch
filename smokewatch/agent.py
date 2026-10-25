@@ -1,14 +1,18 @@
-"""Perception → decision → action loop.
+"""Perception → decision → action loop, anchored on fire.
 
-The agent sees one GOES frame, runs OpenCV detection, and for every candidate plume
-must decide what to do next. Visual evidence drives the next tool call:
-  * a candidate triggers ACTIVE PERCEPTION: fetch earlier frames, run optical flow;
-  * a persistent, coherent plume triggers a FIRMS cross-check;
-  * the combined evidence leads to dismiss / schedule_recheck / request_human_review.
+The agent sees one GOES frame. Candidates are THERMAL ANOMALIES (3.9 µm vs the same pixel
+on the previous days, see fire.py); smoke is supporting evidence. For every candidate the
+agent must decide what to do next, and the evidence drives the next tool call:
+  * hotspot -> ACTIVE PERCEPTION (track_plume): fetch the 2 earlier scans, check the hotspot
+    is still there, look for a smoke plume attached to it and track it with optical flow;
+  * a persistent hotspot -> FIRMS cross-check (VIIRS/MODIS passes before this scan only);
+  * the combined evidence -> dismiss / schedule_recheck / request_human_review.
 
-Safety rail (enforced in code, not prompt): the agent can never publish. A plume
-reaches the public map only after a human approves it at the review endpoint, and
-review requires that motion tracking was run for that plume.
+Safety rails (enforced in code, not prompt):
+  * the agent can never publish; only a human at the review endpoint can;
+  * review requires track_plume to have run and the hotspot to be present in ≥ 2 scans
+    (a single-scan hotspot can only be re-checked);
+  * candidates inside a volcanic exclusion zone (Kīlauea, Mauna Loa) can never be reviewed.
 
 Two interchangeable policies: `RulePolicy` (deterministic, used for eval + fallback)
 and `BedrockPolicy` (Claude on Amazon Bedrock via the Converse tool-use API).
@@ -17,74 +21,92 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import math
 import os
 import time
 import uuid
+from types import SimpleNamespace
 from typing import Callable
 
 import cv2
 import numpy as np
 
-from . import firms, vision
+from . import fire, firms, vision
 from .goes import Frame
 
 FrameSource = Callable[[dt.datetime], Frame]
 
 TOOL_SPECS = [
     {"name": "track_plume",
-     "description": "Active perception. Fetch the GOES frame `minutes_back` minutes earlier, "
-                    "run OpenCV DIS optical flow and mask warping, and report whether candidate "
-                    "`det_id` is persistent (IoU) and moves coherently. Call before any review.",
-     "params": {"det_id": "integer", "minutes_back": "integer (10-30)"}},
+     "description": "Active perception. Fetch the GOES scans up to `minutes_back` minutes earlier "
+                    "(every 5 min) and report in how many scans hotspot `det_id` is present; by day, "
+                    "find the smoke plume attached to it, its downwind bearing, and track it with "
+                    "OpenCV DIS optical flow (IoU, coherence, speed). Required before any review.",
+     "params": {"det_id": "integer", "minutes_back": "integer (5-30)"}},
     {"name": "query_firms",
-     "description": "Look up NASA FIRMS satellite fire detections near candidate `det_id`.",
+     "description": "Look up NASA FIRMS VIIRS/MODIS fire detections within ~5 km of `det_id` acquired "
+                    "in the 24 h BEFORE this scan. Polar orbiters pass only a few times a day, so "
+                    "zero is common for a new fire.",
      "params": {"det_id": "integer"}},
     {"name": "request_human_review",
      "description": "Queue candidate for a human reviewer with overlay image and evidence. "
-                    "Only a human can publish to the public Kahu Ola smoke layer.",
+                    "Only a human can publish to the public Kahu Ola smoke layer. Refused for "
+                    "volcanic candidates and for hotspots seen in fewer than 2 scans.",
      "params": {"det_id": "integer", "confidence": "number 0-1", "rationale": "string"}},
     {"name": "schedule_recheck",
-     "description": "Evidence is ambiguous; re-examine this location on the next scan.",
+     "description": "Evidence is not yet sufficient; re-examine this location on the next scan.",
      "params": {"det_id": "integer", "rationale": "string"}},
     {"name": "dismiss",
-     "description": "Candidate is not smoke (cloud, glint, vog, artefact).",
+     "description": "Candidate is not a wildfire (volcanic heat source, artefact).",
      "params": {"det_id": "integer", "rationale": "string"}},
 ]
 TERMINAL = {"request_human_review", "schedule_recheck", "dismiss"}
+MIN_HOTSPOT_SCANS = 2
+
+
+def _hhmm(t: dt.datetime) -> str:
+    return t.strftime("%H:%MZ")
 
 
 class Episode:
     """State + tool implementations for one scan. Every call is traced."""
 
-    def __init__(self, frame: Frame, frame_source: FrameSource, store, prior_rechecks=None):
+    def __init__(self, frame: Frame, frame_source: FrameSource, store, prior_rechecks=None,
+                 background: fire.Background | None = None):
         self.id = frame.time.strftime("%Y%m%dT%H%MZ") + "-" + uuid.uuid4().hex[:6]
         self.frame = frame
         self.src = frame_source
         self.store = store
-        self.dets, self.mask, self.score = vision.detect(frame)
-        self.fire = vision.hotspot_mask(frame)
-        self.evidence = {d.id: {"vision": self._vision_summary(d)} for d in self.dets}
-        self.outcome: dict[int, dict] = {}
         self.trace: list[dict] = []
+        self.errors: list[str] = []
+        self.bg = background
+        if self.bg is None:
+            try:
+                self.bg = fire.fetch_background(frame.time, frame_source)
+            except Exception as ex:   # no background -> no anomaly test; scan still completes
+                self.errors.append(f"background: {type(ex).__name__}: {ex}")
+        if self.bg is not None:
+            self.dets, self.fire, self.mask = fire.detect_fires(frame, self.bg)
+        else:
+            self.dets, self.fire, self.mask = [], np.zeros(frame.shape, np.uint8), np.zeros(frame.shape, np.uint8)
+        self.evidence = {d.id: {"hotspot": d.summary()} for d in self.dets}
+        self.outcome: dict[int, dict] = {}
         self._link_rechecks(prior_rechecks or [])
 
     # ---------------- observation given to the policy
-    def _vision_summary(self, d):
-        return {"area_km2": d.area_km2, "mean_score": d.mean_score,
-                "centroid": [round(c, 3) for c in d.centroid],
-                "goes_hotspot_px": d.hotspots_px, "nearest_hotspot_km": d.nearest_hotspot_km}
-
     def _link_rechecks(self, rechecks):
         for d in self.dets:
             lon, lat = d.centroid
             hits = [r for r in rechecks
-                    if abs(r["centroid"][0] - lon) < 0.3 and abs(r["centroid"][1] - lat) < 0.3]
+                    if abs(r["centroid"][0] - lon) < 0.05 and abs(r["centroid"][1] - lat) < 0.05
+                    and r.get("time", "") < self.frame.time.isoformat()]
             if hits:
                 self.evidence[d.id]["seen_previous_scan"] = len(hits)
 
     def observation(self) -> dict:
         return {"frame_time_utc": self.frame.time.isoformat(),
                 "daytime": vision.is_daytime(self.frame),
+                "background_scans": self.bg.n_refs if self.bg else 0,
                 "candidates": [{"det_id": i, **e} for i, e in self.evidence.items()],
                 "unresolved": [d.id for d in self.dets if d.id not in self.outcome]}
 
@@ -112,24 +134,66 @@ class Episode:
     def t_track_plume(self, det_id, minutes_back=10):
         d = self._det(det_id)
         minutes_back = int(min(max(int(minutes_back), 5), 30))
-        prev = self.src(self.frame.time - dt.timedelta(minutes=minutes_back))
-        _, prev_mask, _ = vision.detect(prev)
-        m = vision.track_motion(prev, self.frame, prev_mask, self.mask, d)
-        d.motion = m
-        self.evidence[d.id]["motion"] = m
-        return m
+        scans, seen = [], {self.frame.key}
+        prev_frames = []
+        for m in range(5, minutes_back + 1, 5):
+            prev = self.src(self.frame.time - dt.timedelta(minutes=m))
+            if prev.key in seen or prev.time >= self.frame.time:
+                continue
+            seen.add(prev.key)
+            hit = fire.hotspot_present(fire.thermal_anomaly(prev, self.bg), d)
+            scans.append({"time": _hhmm(prev.time), "hotspot": bool(hit)})
+            prev_frames.append(prev)
+        k = 1 + sum(s["hotspot"] for s in scans)
+        span = round((self.frame.time - prev_frames[-1].time).total_seconds() / 60) if prev_frames else 0
+        out = {"scans_checked": 1 + len(scans), "hotspot_scans": k,
+               "persistent": k >= MIN_HOTSPOT_SCANS, "span_min": span,
+               "scans": scans[::-1] + [{"time": _hhmm(self.frame.time), "hotspot": True}]}
+        if not vision.is_daytime(self.frame):
+            out["smoke"] = {"observable": False, "reason": "night: smoke not visible, thermal only"}
+        elif not d.smoke:
+            out["smoke"] = {"observable": True, "attached_plume": False}
+        else:
+            sm = {"observable": True, "attached_plume": True, **{k2: v for k2, v in d.smoke.items()
+                                                                  if k2 != "pixel_bbox"}}
+            if prev_frames:
+                prev = prev_frames[0]
+                mo = vision.track_motion(prev, self.frame, fire.smoke_mask(prev, self.bg), self.mask,
+                                         SimpleNamespace(pixel_bbox=d.smoke["pixel_bbox"]))
+                sm.update({"iou_vs_prev": mo["iou"], "coherence": mo["coherence"]})
+                if "heading_deg" in mo:
+                    mb = fire.compass_from_flow_heading(mo["heading_deg"])
+                    sm.update({"speed_kmh": mo["speed_kmh"], "motion_bearing_deg": round(mb),
+                               "downwind_consistent": fire.angle_diff(mb, d.smoke["bearing_deg"]) < 60
+                               and mo["speed_kmh"] > 3})
+            out["smoke"] = sm
+        self.evidence[d.id]["track"] = out
+        return out
 
     def t_query_firms(self, det_id):
         d = self._det(det_id)
-        r = firms.query(d.bbox, self.frame.time)
+        r = firms.query(d.bbox, self.frame.time, days=1, pad_deg=0.05)
+        lon, lat = d.centroid
+        near = None
+        if r["points"]:
+            near = min(math.hypot((p["lon"] - lon) * 111.32 * math.cos(math.radians(lat)),
+                                  (p["lat"] - lat) * 111.32) for p in r["points"])
         self.evidence[d.id]["firms"] = {"count": r["count"], "sources": r["sources"],
+                                        "latest": r.get("latest"),
+                                        "nearest_km": round(near, 1) if near is not None else None,
                                         "error": r["error"]}
         return self.evidence[d.id]["firms"]
 
     def t_request_human_review(self, det_id, confidence, rationale):
         d = self._det(det_id)
-        if "motion" not in self.evidence[d.id]:   # safety rail
+        tr = self.evidence[d.id].get("track")
+        if tr is None:   # safety rails
             raise PermissionError("track_plume must run before requesting review")
+        if d.volcanic:
+            raise PermissionError(f"candidate is inside the volcanic exclusion zone ({d.volcanic})")
+        if tr["hotspot_scans"] < MIN_HOTSPOT_SCANS:
+            raise PermissionError(f"hotspot seen in {tr['hotspot_scans']} scan(s); "
+                                  f"need ≥ {MIN_HOTSPOT_SCANS} — schedule_recheck instead")
         rid = f"{self.id}-{d.id}"
         overlay = vision.render_overlay(self.frame, self.mask, [d], self.fire)
         ok, png = cv2.imencode(".png", overlay)
@@ -159,16 +223,58 @@ class Episode:
 # ------------------------------------------------------------------ policies
 
 def evidence_confidence(ev: dict) -> float:
-    v = ev["vision"]
-    m = ev.get("motion", {})
-    fire = (v["goes_hotspot_px"] > 0) or (ev.get("firms", {}).get("count", 0) > 0)
-    c = (0.30 * min(v["mean_score"] / 0.8, 1.0)
-         + 0.25 * float(m.get("persistent", False))
-         + 0.15 * m.get("coherence", 0.0)
-         + 0.30 * float(fire))
-    if ev.get("seen_previous_scan"):
-        c += 0.10
+    h, tr = ev["hotspot"], ev.get("track", {})
+    if h.get("volcanic") or not tr.get("persistent"):
+        return 0.0
+    sm, fi = tr.get("smoke") or {}, ev.get("firms") or {}
+    c = 0.45
+    c += 0.15 * min((tr["hotspot_scans"] - 1) / 2, 1.0)        # 3/3 scans -> +0.15
+    c += 0.10 * float(h["max_ddt_k"] >= 15)
+    c += 0.10 * float(bool(sm.get("attached_plume")))
+    c += 0.05 * float(bool(sm.get("downwind_consistent")))
+    c += 0.15 * float(fi.get("count", 0) > 0)
+    c += 0.05 * float(bool(ev.get("seen_previous_scan")))
     return round(min(c, 1.0), 2)
+
+
+def explain(ev: dict) -> str:
+    """Rationale built only from the evidence actually gathered for this candidate."""
+    h = ev["hotspot"]
+    lon, lat = h["centroid"]
+    parts = [f"Hotspot at {lat:.3f}N {abs(lon):.3f}W: {h['hot_px']} px, Δ(3.9−11.2 µm) "
+             f"+{h['max_ddt_k']:.1f} K vs same time on previous days"]
+    if h.get("volcanic"):
+        parts.append(f"inside {h['volcanic']} exclusion zone — volcanic heat, not wildfire")
+        return "; ".join(parts)
+    tr = ev.get("track")
+    if tr:
+        when = ", ".join(s["time"] for s in tr["scans"] if s["hotspot"])
+        parts.append(f"present in {tr['hotspot_scans']}/{tr['scans_checked']} scans over "
+                     f"{tr['span_min']} min ({when})")
+        sm = tr.get("smoke") or {}
+        if not sm.get("observable", True):
+            parts.append("night — smoke not observable")
+        elif sm.get("attached_plume"):
+            s = (f"smoke plume {sm['area_km2']:.0f} km² extending {sm['length_km']:.0f} km "
+                 f"toward {sm['bearing_deg']}°")
+            if "motion_bearing_deg" in sm:
+                s += (f", drifting {sm['motion_bearing_deg']}° at {sm['speed_kmh']:.0f} km/h"
+                      f" ({'consistent' if sm.get('downwind_consistent') else 'not consistent'} with plume axis)")
+            parts.append(s)
+        else:
+            parts.append("no smoke plume attached")
+    fi = ev.get("firms")
+    if fi is not None:
+        if fi.get("error"):
+            parts.append(f"FIRMS unavailable ({fi['error'][:40]})")
+        elif fi["count"]:
+            parts.append(f"FIRMS: {fi['count']} VIIRS/MODIS detections in prior 24 h, nearest "
+                         f"{fi['nearest_km']} km, latest {fi['latest'][11:16]}Z")
+        else:
+            parts.append("FIRMS: no VIIRS/MODIS detection in prior 24 h (GOES ahead of polar passes)")
+    if ev.get("seen_previous_scan"):
+        parts.append(f"flagged on {ev['seen_previous_scan']} earlier scan(s)")
+    return "; ".join(parts)
 
 
 class RulePolicy:
@@ -176,43 +282,40 @@ class RulePolicy:
 
     def run(self, ep: Episode, max_steps=40):
         for d in [d for d in ep.dets if d.id not in ep.outcome]:
-            m = ep.call("track_plume", {"det_id": d.id, "minutes_back": 10}, self.name)
-            if "error" in m:
-                ep.call("schedule_recheck", {"det_id": d.id,
-                                             "rationale": f"tracking failed: {m['error']}"}, self.name)
+            ev = ep.evidence[d.id]
+            if d.volcanic:
+                ep.call("dismiss", {"det_id": d.id, "rationale": explain(ev)}, self.name)
                 continue
-            if not m["persistent"]:
-                ep.call("dismiss", {"det_id": d.id, "rationale":
-                        f"not persistent over {m.get('minutes')} min (IoU {m['iou']}) — likely cloud/glint"},
-                        self.name)
+            t = ep.call("track_plume", {"det_id": d.id, "minutes_back": 10}, self.name)
+            if "error" in t:
+                ep.call("schedule_recheck", {"det_id": d.id,
+                                             "rationale": f"tracking failed: {t['error']}"}, self.name)
+                continue
+            if not t["persistent"]:
+                ep.call("schedule_recheck", {"det_id": d.id, "rationale":
+                        explain(ev) + "; single-scan hotspot — wait for confirmation"}, self.name)
                 continue
             ep.call("query_firms", {"det_id": d.id}, self.name)
-            conf = evidence_confidence(ep.evidence[d.id])
-            if conf >= 0.6:
-                ep.call("request_human_review", {"det_id": d.id, "confidence": conf,
-                        "rationale": "persistent coherent plume with fire evidence"}, self.name)
-            elif conf >= 0.35:
-                ep.call("schedule_recheck", {"det_id": d.id,
-                        "rationale": f"confidence {conf}: plume persists but no fire evidence"},
-                        self.name)
-            else:
-                ep.call("dismiss", {"det_id": d.id, "rationale": f"confidence {conf}"}, self.name)
+            ep.call("request_human_review", {"det_id": d.id, "confidence": evidence_confidence(ev),
+                                             "rationale": explain(ev)}, self.name)
 
 
-SYSTEM_PROMPT = """You are the triage agent for Kahu Ola SmokeWatch, a public wildfire-smoke
-layer for Hawaiʻi. Each candidate plume came from OpenCV analysis of a GOES-18 frame.
-For EVERY unresolved candidate, gather evidence with tools, then resolve it with exactly one of
+SYSTEM_PROMPT = """You are the triage agent for Kahu Ola SmokeWatch, a public wildfire layer for
+Hawaiʻi. Each candidate is a THERMAL ANOMALY in a GOES-18 scan: the 3.9 µm channel is much
+warmer than the same pixel at the same time on the previous 3 days. For EVERY unresolved
+candidate, gather evidence with tools, then resolve it with exactly one of
 request_human_review, schedule_recheck or dismiss.
 
 Rules:
-- Always call track_plume before resolving a candidate as review. Use minutes_back 10; if IoU is
-  borderline (0.2-0.4) you may track again at 20.
-- Non-persistent features (IoU < 0.3) are usually clouds or sun glint — dismiss.
-- Persistent + coherent plumes: call query_firms. Fire evidence (FIRMS count > 0 or GOES hotspot
-  pixels > 0) plus persistence → request_human_review.
-- Persistent but no fire evidence → schedule_recheck (could be vog from Kīlauea, haze, or a fire
-  not yet detected). Vog sits downwind (southwest) of Hawaiʻi Island and does not have a point source.
-- You cannot publish. Never invent numbers; cite the tool outputs in your rationale (≤ 30 words).
+- If hotspot.volcanic is set, the candidate is inside the Kīlauea/Mauna Loa exclusion zone:
+  dismiss it, citing the zone. It can never be reviewed.
+- Otherwise call track_plume (minutes_back 10) first. If hotspot_scans < 2, schedule_recheck
+  (a one-scan hotspot may be noise; the next scan comes in 5 minutes).
+- If the hotspot persists (≥ 2 scans), call query_firms, then request_human_review. A smoke
+  plume extending downwind and FIRMS detections raise confidence; their absence does not block
+  review (polar satellites pass only a few times a day; GOES scans every 5 minutes).
+- You cannot publish. Never invent numbers: the rationale (≤ 40 words) must cite the tool
+  outputs — ΔT, scans with hotspot, plume size/bearing, FIRMS count.
 """
 
 
@@ -276,11 +379,12 @@ def make_policy(name: str | None = None):
     return BedrockPolicy() if name == "bedrock" else RulePolicy()
 
 
-def run_scan(frame: Frame, frame_source: FrameSource, store, policy=None) -> dict:
+def run_scan(frame: Frame, frame_source: FrameSource, store, policy=None,
+             background: fire.Background | None = None) -> dict:
     prior = [store.get_json(k) for k in store.list("rechecks/")[-50:]]
-    ep = Episode(frame, frame_source, store, [p for p in prior if p])
+    ep = Episode(frame, frame_source, store, [p for p in prior if p], background)
     policy = policy or make_policy()
-    if ep.dets and vision.is_daytime(frame):
+    if ep.dets:   # thermal works day and night; smoke evidence is daytime-only
         try:
             policy.run(ep)
         except Exception as ex:   # LLM outage must not stop the safety pipeline
@@ -290,6 +394,8 @@ def run_scan(frame: Frame, frame_source: FrameSource, store, policy=None) -> dic
     summary = {
         "episode": ep.id, "frame": frame.key, "frame_time": frame.time.isoformat(),
         "policy": policy.name, "daytime": vision.is_daytime(frame),
+        "background_scans": ep.bg.n_refs if ep.bg else 0, "errors": ep.errors,
+        "anomaly_px": int(ep.fire.sum()),
         "candidates": len(ep.dets), "outcomes": ep.outcome, "evidence": ep.evidence,
         "trace": ep.trace,
     }

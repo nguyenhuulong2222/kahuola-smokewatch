@@ -53,6 +53,13 @@ def true_color(frame: Frame) -> np.ndarray:
     return cv2.cvtColor((rgb * 255).astype(np.uint8), cv2.COLOR_RGB2BGR)
 
 
+def ir_gray(frame: Frame) -> np.ndarray:
+    """Night background: inverted 11.2 µm (cold cloud tops white), BGR uint8."""
+    t = np.nan_to_num(frame.bands["C14"], nan=300.0)
+    g = np.clip((310.0 - t) / 90.0, 0, 1) ** 0.7
+    return cv2.cvtColor((g * 255).astype(np.uint8), cv2.COLOR_GRAY2BGR)
+
+
 def is_daytime(frame: Frame, p=PARAMS) -> bool:
     return float(np.nanmedian(frame.bands["C01"])) > p["night_blue_max"]
 
@@ -83,7 +90,12 @@ def smoke_score(frame: Frame, p=PARAMS) -> np.ndarray:
     return cv2.bilateralFilter(score.astype(np.float32), 5, 0.1, 3)
 
 
-def hotspot_mask(frame: Frame, p=PARAMS) -> np.ndarray:
+def hotspot_mask(frame: Frame, p=PARAMS, ref=None) -> np.ndarray:
+    """Active-fire pixels. With `ref` (a fire.Background) the test is the anomaly vs the
+    same pixel on previous days; without it, the legacy absolute C07−C14 threshold."""
+    if ref is not None:
+        from . import fire
+        return fire.thermal_anomaly(frame, ref)
     t7 = np.nan_to_num(frame.bands["C07"]).astype(np.float32)
     t14 = np.nan_to_num(frame.bands["C14"]).astype(np.float32)
     m = ((t7 - t14) > p["fire_dt_min"]) & (t7 > p["fire_t7_min"])
@@ -206,7 +218,7 @@ def track_motion(prev: Frame, curr: Frame, prev_mask: np.ndarray, curr_mask: np.
 
 def render_overlay(frame: Frame, mask: np.ndarray, dets: list[Detection],
                    fire: np.ndarray | None = None, scale: int = 3) -> np.ndarray:
-    img = true_color(frame)
+    img = true_color(frame) if is_daytime(frame) else ir_gray(frame)
     img = cv2.resize(img, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
     m = cv2.resize(mask, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_NEAREST)
     tint = img.copy()
@@ -221,7 +233,8 @@ def render_overlay(frame: Frame, mask: np.ndarray, dets: list[Detection],
                        5, (0, 0, 255), 2, cv2.LINE_AA)
     for d in dets:
         x, y, w, h = d.pixel_bbox
-        cv2.putText(img, f"#{d.id} {d.mean_score:.2f}", (x * scale, max(y * scale - 6, 14)),
+        text = d.label() if hasattr(d, "label") else f"#{d.id} {d.mean_score:.2f}"
+        cv2.putText(img, text, (x * scale, max(y * scale - 6, 14)),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
     stamp = frame.time.strftime("GOES-18 %Y-%m-%d %H:%M UTC")
     cv2.putText(img, stamp, (8, img.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,

@@ -1,0 +1,119 @@
+# SmokeWatch evaluation cases. All times UTC (HST = UTC − 10).
+#
+# Primary metric: TIME TO DETECTION per fire — first GOES-18 scan where the agent queues a
+# human review for a candidate within `radius_km` of the origin, compared with
+#   (1) the official first-report time, and
+#   (2) the first VIIRS (S-NPP) / MODIS (Aqua+Terra) FIRMS detection within the same radius,
+#       computed by eval/run_eval.py from the FIRMS yearly archive (keyless download:
+#       firms.modaps.eosdis.nasa.gov/data/country/{viirs-snpp,modis}/2023/*_United_States.csv).
+#       NOAA-20 is not in the keyless archive, so "first VIIRS" here means S-NPP.
+# Secondary metric: per-frame precision on negative days (any review in a frame with no
+# fire = false-alarm frame) and on positive frames (reviews not near any known fire).
+#
+# Sources
+#   F1  UL FSRI, Lahaina Fire Comprehensive Timeline Report (Phase 1), Apr 2024
+#       https://d1gi3fvbl0xj2a.cloudfront.net/2024-04/FSRI_Lahaina_Fire-Comprehensive_Timeline_Report_04_17_2024_Redacted_Final_0.pdf
+#   F2  UL FSRI, Lahaina Fire Incident Analysis (Phase 2), Oct 2024
+#       https://d1gi3fvbl0xj2a.cloudfront.net/2024-10/FSRI_Lahaina_Report__Redactions_10022024_Rev1%20(1).pdf
+#   AAR WFCA, Maui Wildfires After-Action Report, Maui Dept of Fire & Public Safety, Jan 2025
+#       https://lessonslearned-prod-media-bucket.s3.us-gov-west-1.amazonaws.com/s3fs-public/2025-01/Maui%20Wildfires%20After-Action%20Report%20Maui%20Dept%20of%20Fire%20and%20Public%20Safety.pdf
+#   OSM street geocodes via nominatim.openstreetmap.org (origin given only as an address).
+
+frames_dir: .cache/goes
+step_min: 5
+
+events:
+  - id: olinda
+    name: Olinda fire (Upcountry Maui)
+    first_report_utc: 2023-08-08T10:22Z     # 00:22 HST; AAR 00:20
+    origin: [20.8087, -156.2829]            # "near the bird sanctuary" (AAR p.10) -> Maui Bird Conservation Center, OSM
+    origin_source: "AAR p.10 + OSM geocode"
+    time_source: "F1 p.31, F2, AAR p.10 (primary)"
+    radius_km: 4
+    window_utc: [2023-08-08T10:10Z, 2023-08-08T12:30Z]
+    night: true
+
+  - id: lahaina_am
+    name: Lahaina morning fire (Lahainaluna Rd)
+    first_report_utc: 2023-08-08T16:34Z     # 06:34 HST; 100% contained 08:52 HST (AAR)
+    origin: [20.8847, -156.6630]            # F2 §3.7.7 (coordinates given)
+    origin_source: "F2 §3.7.7 (primary)"
+    time_source: "F2, F1, AAR (primary)"
+    radius_km: 4
+    window_utc: [2023-08-08T16:25Z, 2023-08-08T19:00Z]
+
+  - id: kula
+    name: Kula fire (Kualono Pl)
+    first_report_utc: 2023-08-08T21:27Z     # 11:27 HST; AAR 11:25
+    origin: [20.7724, -156.3069]            # Kualono Pl, OSM
+    origin_source: "F1/AAR address + OSM geocode"
+    time_source: "F1, F2, AAR (primary)"
+    radius_km: 3                            # Olinda origin is 4.4 km away and already burning
+    window_utc: [2023-08-08T21:15Z, 2023-08-08T23:30Z]
+
+  - id: lahaina_pm
+    name: Lahaina afternoon fire (rekindle, Kuʻialua St)
+    first_report_utc: 2023-08-09T00:55Z     # 14:55 HST
+    origin: [20.8847, -156.6630]            # same origin as the morning fire (F2)
+    origin_source: "F2 (primary)"
+    time_source: "F1, F2, AAR (primary). ATF news coverage cites ~14:25 HST; not verified"
+    radius_km: 4
+    window_utc: [2023-08-09T00:45Z, 2023-08-09T03:05Z]
+
+  - id: pulehu
+    name: Pūlehu–Kīhei fire
+    first_report_utc: 2023-08-09T04:01Z     # 18:01 HST; AAR 17:59
+    origin: [20.8002, -156.3701]            # Pūlehu Rd / ʻŌpalipali Pl, OSM
+    origin_source: "F1/AAR address + OSM geocode"
+    time_source: "F1 p.32, AAR p.13 (primary)"
+    radius_km: 3
+    window_utc: [2023-08-09T03:50Z, 2023-08-09T06:00Z]
+
+  - id: kohala_ranch
+    name: North Kohala (Akoni Pule Hwy) fire, Hawaiʻi Island
+    first_report_utc: 2023-08-08T13:00Z     # "about 3 a.m." HST — approximate
+    origin: [20.0902, -155.8312]            # Hwy 270 mm 6–7 near Kohala Ranch, OSM — approximate
+    origin_source: "news + OSM geocode (secondary)"
+    time_source: "bigislandnow.com 2023-08-08; bigislandvideonews.com 2023-08-08 (secondary, approximate)"
+    radius_km: 6
+    window_utc: [2023-08-08T12:30Z, 2023-08-08T15:30Z]
+    night: true
+
+  - id: mauna_kea_resort
+    name: Mauna Kea Resort / Kawaihae fires, Hawaiʻi Island
+    first_report_utc: 2023-08-09T01:00Z     # "shortly after 3 p.m." HST — approximate
+    origin: [20.0069, -155.8262]            # Mauna Kea Beach Resort area, OSM — approximate
+    origin_source: "news + OSM geocode (secondary)"
+    time_source: "bigislandnow.com 2023-08-08 (secondary, approximate)"
+    radius_km: 6
+    window_utc: [2023-08-09T00:45Z, 2023-08-09T03:05Z]
+
+# Known fires used only to attribute reviews on positive frames (not timed).
+other_known_fires:
+  - {name: Waimea (Lalamilo Rd) fire, origin: [20.011, -155.690], radius_km: 6, from_utc: 2023-08-08T17:00Z}
+
+negatives:
+  - id: clear_0806
+    kind: clear
+    label_source: >-
+      No Maui/Hawaiʻi Island fires reported 5–6 Aug 2023 in AAR/F1/news (absence of evidence);
+      FIRMS archive: only Kīlauea/Mauna Loa volcanic detections on these dates.
+    frames_utc: [2023-08-06T20:01Z, 2023-08-06T23:01Z, 2023-08-07T01:01Z, 2023-08-07T09:01Z]
+  - id: vog_0110
+    kind: vog
+    label_source: >-
+      Kīlauea summit eruption 5 Jan–7 Mar 2023 (USGS HVO); vog over Honolulu 10 Jan 2023
+      (Hawaii News Now, secondary). Also exercises the volcanic exclusion mask.
+    frames_utc: [2023-01-10T20:01Z, 2023-01-10T23:01Z, 2023-01-11T01:01Z, 2023-01-11T09:01Z]
+  - id: vog_0912
+    kind: vog
+    label_source: >-
+      Kīlauea summit eruption 10–16 Sep 2023 (USGS HVO); DOH release 11 Sep 2023 vog on west
+      Hawaiʻi Island; Pāhala unhealthy for sensitive groups 12 Sep (HPR).
+    frames_utc: [2023-09-12T20:01Z, 2023-09-12T23:01Z, 2023-09-13T01:01Z, 2023-09-13T09:01Z]
+  - id: glint_0615
+    kind: glint
+    label_source: >-
+      Near-solstice afternoon: GOES-18 specular point nearest Hawaiʻi ~13:00–15:00 HST.
+      Kīlauea summit erupting 7–19 Jun 2023 (USGS HVO).
+    frames_utc: [2023-06-15T22:31Z, 2023-06-15T23:31Z, 2023-06-16T00:31Z]

@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import numpy as np  # noqa: E402
 
-from smokewatch import agent, goes, vision  # noqa: E402
+from smokewatch import agent, goes  # noqa: E402
 from smokewatch.store import LocalStore  # noqa: E402
 
 
@@ -69,13 +69,15 @@ def main(argv=None) -> dict:
     print(f"frame     {frame.key.split('/')[-1]}")
     print(f"time      {frame.time.isoformat()}  daytime={summary['daytime']}  coverage={cov:.0%}")
     print(f"latency   fetch {t_fetch:.1f}s  scan {t_scan:.1f}s")
-    print(f"detections {summary['candidates']}  hotspot_px {int(vision.hotspot_mask(frame).sum())}")
+    print(f"background {summary['background_scans']} scans  anomaly_px {summary['anomaly_px']}  "
+          f"candidates {summary['candidates']}  errors {summary['errors'] or '-'}")
     for did, ev in summary["evidence"].items():
-        v, m = ev["vision"], ev.get("motion", {})
+        h, tr = ev["hotspot"], ev.get("track", {})
         out = summary["outcomes"].get(did, {})
-        print(f"  #{did} {v['area_km2']:>8} km² score {v['mean_score']:.2f} at {v['centroid']} "
-              f"hot {v['goes_hotspot_px']} iou {m.get('iou')} coh {m.get('coherence')} "
-              f"-> {out.get('action')}")
+        print(f"  #{did} {h['hot_px']} px +{h['max_ddt_k']} K at {h['centroid']} "
+              f"{'VOLCANIC ' if h['volcanic'] else ''}scans {tr.get('hotspot_scans')}/"
+              f"{tr.get('scans_checked')} -> {out.get('action')}")
+        print(f"      {out.get('rationale')}")
     print(f"overlay   {png}")
     print(f"trace     {os.path.join(a.out, 'traces', summary['episode'] + '.json')}")
     return summary

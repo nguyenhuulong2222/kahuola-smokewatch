@@ -5,10 +5,15 @@ Product: ABI-L2-MCMIP (Cloud & Moisture Imagery, all 16 bands, 2 km).
   sector "C" on GOES-18 = PACUS (5-min cadence, covers Hawaiʻi)
   sector "F" = Full Disk (10-min cadence) — fallback.
 Bucket is public: s3://noaa-goes18 (us-east-1), anonymous access.
+
+Reads use HTTP byte ranges (netCDF "#mode=bytes"): only the ~4 HDF5 chunks per band
+that cover Hawaiʻi are transferred, not the 54 MB file. Reprojected frames are cached
+as .npz (~1.7 MB) so eval replays and the multi-day thermal background are cheap.
 """
 from __future__ import annotations
 
 import datetime as dt
+import functools
 import os
 import re
 from dataclasses import dataclass, field
@@ -64,17 +69,40 @@ def _s3():
                         config=Config(signature_version=UNSIGNED, retries={"max_attempts": 3}))
 
 
+def _hour_keys_uncached(sector: str, hour: dt.datetime) -> tuple[str, ...]:
+    prefix = f"ABI-L2-MCMIP{sector}/{hour:%Y}/{hour.timetuple().tm_yday:03d}/{hour:%H}/"
+    keys: list[str] = []
+    for page in _s3().get_paginator("list_objects_v2").paginate(Bucket=BUCKET, Prefix=prefix):
+        keys += [o["Key"] for o in page.get("Contents", []) if o["Key"].endswith(".nc")]
+    return tuple(keys)
+
+
+_hour_keys_cached = functools.lru_cache(maxsize=512)(_hour_keys_uncached)
+
+
+def _hour_keys(sector: str, hour: dt.datetime) -> tuple[str, ...]:
+    hour = hour.replace(minute=0, second=0, microsecond=0)
+    # a finished hour never changes; the current one still gains scans
+    if dt.datetime.now(dt.timezone.utc) - hour > dt.timedelta(hours=2):
+        return _hour_keys_cached(sector, hour)
+    return _hour_keys_uncached(sector, hour)
+
+
 def list_keys(when: dt.datetime, sector: str = "C", hours_back: int = 1) -> list[str]:
     """Keys for scans in the hour of `when` (and `hours_back` hours before), sorted by time."""
-    s3 = _s3()
     keys: list[str] = []
     for h in range(hours_back, -1, -1):
-        t = when - dt.timedelta(hours=h)
-        prefix = f"ABI-L2-MCMIP{sector}/{t:%Y}/{t.timetuple().tm_yday:03d}/{t:%H}/"
-        pag = s3.get_paginator("list_objects_v2")
-        for page in pag.paginate(Bucket=BUCKET, Prefix=prefix):
-            keys += [o["Key"] for o in page.get("Contents", []) if o["Key"].endswith(".nc")]
+        keys += _hour_keys(sector, when - dt.timedelta(hours=h))
     return sorted(keys, key=scan_start)
+
+
+def keys_between(t0: dt.datetime, t1: dt.datetime, sector: str = "C") -> list[str]:
+    """All scan keys with start time in [t0, t1]."""
+    keys, h = [], t0.replace(minute=0, second=0, microsecond=0)
+    while h <= t1:
+        keys += _hour_keys(sector, h)
+        h += dt.timedelta(hours=1)
+    return sorted((k for k in keys if t0 <= scan_start(k) <= t1), key=scan_start)
 
 
 def nearest_key(when: dt.datetime, sector: str = "C") -> str:
@@ -152,11 +180,37 @@ def read_frame(path: str, key: str | None = None, bbox=HAWAII_BBOX) -> Frame:
             arr = np.ma.filled(v[r0:r1, c0:c1].astype(np.float32), np.nan)
             bands[b] = cv2.remap(arr, mx, my, interpolation=cv2.INTER_LINEAR,
                                  borderMode=cv2.BORDER_CONSTANT, borderValue=np.nan)
-        t = scan_start(key or os.path.basename(path))
+        t = scan_start(key or os.path.basename(path.split("#")[0]))
     return Frame(time=t, key=key or os.path.basename(path), bands=bands, lats=lats, lons=lons,
                  meta={"native_window": [r0, r1, c0, c1]})
 
 
+def _save_npz(fr: Frame, path: str):
+    np.savez_compressed(path + ".part.npz", lats=fr.lats, lons=fr.lons, key=fr.key,
+                        time=fr.time.isoformat(), **{f"b_{k}": v for k, v in fr.bands.items()})
+    os.replace(path + ".part.npz", path)
+
+
+def _load_npz(path: str) -> Frame:
+    with np.load(path) as z:
+        return Frame(time=dt.datetime.fromisoformat(str(z["time"])), key=str(z["key"]),
+                     bands={k[2:]: z[k] for k in z.files if k.startswith("b_")},
+                     lats=z["lats"], lons=z["lons"], meta={"cache": "npz"})
+
+
+def load_key(key: str, cache_dir: str = "/tmp/goes") -> Frame:
+    """Frame for an exact S3 key: .npz cache -> local .nc -> HTTP byte-range read."""
+    os.makedirs(cache_dir, exist_ok=True)
+    base = os.path.basename(key)
+    npz = os.path.join(cache_dir, base[:-3] + ".npz")
+    if os.path.exists(npz):
+        return _load_npz(npz)
+    nc = os.path.join(cache_dir, base)
+    src = nc if os.path.exists(nc) else f"https://{BUCKET}.s3.amazonaws.com/{key}#mode=bytes"
+    fr = read_frame(src, key)
+    _save_npz(fr, npz)
+    return fr
+
+
 def fetch_frame(when: dt.datetime, sector: str = "C", cache_dir: str = "/tmp/goes") -> Frame:
-    key = nearest_key(when, sector)
-    return read_frame(download(key, cache_dir), key)
+    return load_key(nearest_key(when, sector), cache_dir)
