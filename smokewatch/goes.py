@@ -61,7 +61,9 @@ def scan_start(key: str) -> dt.datetime:
     return t.replace(hour=int(hh), minute=int(mm), second=int(ss[:2]))
 
 
+@functools.lru_cache(maxsize=1)
 def _s3():
+    """One shared client: creating clients concurrently from threads is not safe, using one is."""
     import boto3
     from botocore import UNSIGNED
     from botocore.config import Config
@@ -199,17 +201,36 @@ def _load_npz(path: str) -> Frame:
 
 
 def load_key(key: str, cache_dir: str = "/tmp/goes") -> Frame:
-    """Frame for an exact S3 key: .npz cache -> local .nc -> HTTP byte-range read."""
+    """Frame for an exact S3 key: .npz cache -> local .nc -> fetch.
+
+    GOES_FETCH=bytes (default): HTTP byte-range read of the Hawaiʻi window only — best on a
+    slow link. GOES_FETCH=download: whole-file S3 download — best inside us-east-1 (Lambda),
+    where 54 MB takes ~1 s and downloads parallelise (see prefetch)."""
     os.makedirs(cache_dir, exist_ok=True)
     base = os.path.basename(key)
     npz = os.path.join(cache_dir, base[:-3] + ".npz")
     if os.path.exists(npz):
         return _load_npz(npz)
     nc = os.path.join(cache_dir, base)
+    if not os.path.exists(nc) and os.environ.get("GOES_FETCH", "bytes") == "download":
+        download(key, cache_dir)
     src = nc if os.path.exists(nc) else f"https://{BUCKET}.s3.amazonaws.com/{key}#mode=bytes"
     fr = read_frame(src, key)
     _save_npz(fr, npz)
+    if os.environ.get("GOES_FETCH") == "download":
+        os.remove(nc)   # keep /tmp small: the npz is all we need
     return fr
+
+
+def prefetch(keys: list[str], cache_dir: str = "/tmp/goes", workers: int = 8) -> None:
+    """Download raw files for keys not yet cached, in parallel threads (S3 I/O only; the
+    netCDF decode stays single-threaded in load_key because HDF5 is not thread-safe)."""
+    from concurrent.futures import ThreadPoolExecutor
+    todo = [k for k in dict.fromkeys(keys)
+            if not os.path.exists(os.path.join(cache_dir, os.path.basename(k)[:-3] + ".npz"))]
+    if todo:
+        with ThreadPoolExecutor(workers) as ex:
+            list(ex.map(lambda k: download(k, cache_dir), todo))
 
 
 def fetch_frame(when: dt.datetime, sector: str = "C", cache_dir: str = "/tmp/goes") -> Frame:

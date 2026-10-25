@@ -1,0 +1,146 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Kahu Ola SmokeWatch — GOES-18 wildfire detection for Hawaiʻi (OpenCV 5 + triage agent),
+  human-in-the-loop review, public GeoJSON layer.
+
+Parameters:
+  FirmsMapKey:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: NASA FIRMS MAP_KEY (optional; without it query_firms reports "unavailable").
+  ReviewToken:
+    Type: String
+    NoEcho: true
+    MinLength: 24
+    Description: Shared secret for POST /review (generate with `openssl rand -hex 24`).
+  AgentPolicy:
+    Type: String
+    AllowedValues: [rules, bedrock]
+    Default: rules
+  BedrockModelId:
+    Type: String
+    Default: ""
+    Description: Model or inference-profile ID passed to Converse (Step 4 checks availability).
+  BedrockFoundationModelId:
+    Type: String
+    Default: ""
+    Description: Underlying foundation-model ID (same as BedrockModelId unless it is a "us." inference profile).
+
+Conditions:
+  UseBedrock: !And
+    - !Equals [!Ref AgentPolicy, bedrock]
+    - !Not [!Equals [!Ref BedrockModelId, ""]]
+
+Globals:
+  Function:
+    Architectures: [x86_64]
+    MemorySize: 3008
+    Timeout: 300
+    EphemeralStorage:
+      Size: 2048
+    Environment:
+      Variables:
+        BUCKET: !Ref DataBucket
+        AGENT_POLICY: !Ref AgentPolicy
+        BEDROCK_MODEL_ID: !Ref BedrockModelId
+        FIRMS_MAP_KEY: !Ref FirmsMapKey
+
+Resources:
+  DataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: {SSEAlgorithm: AES256}
+      OwnershipControls:
+        Rules: [{ObjectOwnership: BucketOwnerEnforced}]
+      LifecycleConfiguration:
+        Rules:
+          - Id: expire-traces
+            Status: Enabled
+            Prefix: traces/
+            ExpirationInDays: 30
+          - Id: expire-rechecks
+            Status: Enabled
+            Prefix: rechecks/
+            ExpirationInDays: 2
+
+  ScanFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: GOES-18 scan + triage agent (day and night)
+      PackageType: Image
+      ImageConfig:
+        Command: ["handler.scan"]
+      Policies:
+        - S3CrudPolicy: {BucketName: !Ref DataBucket}
+        - !If
+          - UseBedrock
+          - Statement:
+              - Effect: Allow
+                Action: [bedrock:InvokeModel]
+                Resource:
+                  - !Sub arn:aws:bedrock:${AWS::Region}::foundation-model/${BedrockModelId}
+                  - !Sub arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/${BedrockModelId}
+                  - !Sub arn:aws:bedrock:*::foundation-model/${BedrockFoundationModelId}
+          - !Ref AWS::NoValue
+      Events:
+        Every10Min:
+          Type: Schedule
+          Properties:
+            Schedule: rate(10 minutes)
+            Enabled: true
+    Metadata:
+      DockerContext: .
+      Dockerfile: Dockerfile
+      DockerTag: v1
+
+  HttpFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Review page, JSON API, public GeoJSON, POST /review
+      PackageType: Image
+      ImageConfig:
+        Command: ["handler.http"]
+      MemorySize: 512
+      Timeout: 30
+      Environment:
+        Variables:
+          REVIEW_TOKEN: !Ref ReviewToken
+      Policies:
+        - S3CrudPolicy: {BucketName: !Ref DataBucket}
+      FunctionUrlConfig:
+        AuthType: NONE
+        Cors:
+          AllowOrigins: ["*"]
+          AllowMethods: [GET]
+    Metadata:
+      DockerContext: .
+      Dockerfile: Dockerfile
+      DockerTag: v1
+
+  # Function URLs with AuthType NONE also need lambda:InvokeFunction for the public
+  # principal, scoped to calls arriving through the function URL.
+  HttpFunctionUrlInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref HttpFunction
+      Principal: "*"
+      InvokedViaFunctionUrl: true
+
+Outputs:
+  ReviewUrl:
+    Description: Review page (Function URL)
+    Value: !GetAtt HttpFunctionUrl.FunctionUrl
+  Bucket:
+    Value: !Ref DataBucket
+  ScanFunctionName:
+    Value: !Ref ScanFunction

@@ -1,0 +1,5 @@
+*
+!requirements.txt
+!handler.py
+!smokewatch/
+smokewatch/__pycache__/
