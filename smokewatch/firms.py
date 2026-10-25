@@ -8,7 +8,8 @@ not see satellite passes that happen after the GOES scan it is judging.
 
 Offline/eval: if FIRMS_ARCHIVE_DIR holds the keyless yearly country CSVs
 (firms.modaps.eosdis.nasa.gov/data/country/{viirs-snpp,modis}/YYYY/*_United_States.csv),
-they are used instead of the API (S-NPP VIIRS + MODIS only).
+they are used instead of the API (S-NPP VIIRS + MODIS Aqua/Terra; NOAA-20 needs a MAP_KEY:
+see download_area).
 """
 from __future__ import annotations
 
@@ -30,7 +31,32 @@ def acq_time(row: dict) -> dt.datetime:
     return dt.datetime.fromisoformat(f'{row["acq_date"]}T{hhmm[:2]}:{hhmm[2:]}+00:00')
 
 
-@functools.lru_cache(maxsize=4)
+def sensor(row: dict) -> str:
+    """VIIRS_SNPP / VIIRS_NOAA20 / VIIRS_NOAA21 / MODIS_Aqua / MODIS_Terra from a CSV row."""
+    sat = (row.get("satellite") or "").strip()
+    if (row.get("instrument") or "").upper() == "MODIS" or sat in ("Aqua", "Terra", "A", "T"):
+        return "MODIS_" + {"A": "Aqua", "T": "Terra"}.get(sat, sat)
+    return {"N": "VIIRS_SNPP", "N20": "VIIRS_NOAA20", "1": "VIIRS_NOAA20",
+            "N21": "VIIRS_NOAA21", "2": "VIIRS_NOAA21"}.get(sat, f"VIIRS_{sat}")
+
+
+def download_area(source: str, bbox, date: dt.date, days: int, out_path: str,
+                  map_key: str | None = None, timeout: int = 60) -> int:
+    """Save an area-API CSV (e.g. VIIRS_NOAA20_SP for a past date) next to the yearly
+    archive files, so archive mode picks it up. Returns row count."""
+    key = map_key or os.environ["FIRMS_MAP_KEY"]
+    w, s, e, n = bbox
+    url = f"{API}/{key}/{source}/{w:.3f},{s:.3f},{e:.3f},{n:.3f}/{days}/{date:%Y-%m-%d}"
+    with urllib.request.urlopen(url, timeout=timeout) as r:
+        text = r.read().decode()
+    if not text.startswith("latitude"):
+        raise RuntimeError(f"FIRMS {source}: {text[:120]}")
+    with open(out_path, "w") as f:
+        f.write(text)
+    return text.count("\n") - 1
+
+
+@functools.lru_cache(maxsize=8)
 def _archive(path: str) -> tuple[dict, ...]:
     """Hawaiʻi rows of one yearly CSV (the US files are ~30 MB; keep only what we need)."""
     out = []
@@ -38,9 +64,8 @@ def _archive(path: str) -> tuple[dict, ...]:
         for r in csv.DictReader(f):
             lat, lon = float(r["latitude"]), float(r["longitude"])
             if 18.0 < lat < 23.0 and -161.0 < lon < -154.0:
-                src = "MODIS" if "modis" in os.path.basename(path).lower() else "VIIRS_SNPP"
                 out.append({"lat": lat, "lon": lon, "t": acq_time(r), "conf": r.get("confidence"),
-                            "frp": r.get("frp"), "type": r.get("type"), "src": src})
+                            "frp": r.get("frp"), "type": r.get("type"), "src": sensor(r)})
     return tuple(out)
 
 

@@ -3,10 +3,10 @@
 # Primary metric: TIME TO DETECTION per fire — first GOES-18 scan where the agent queues a
 # human review for a candidate within `radius_km` of the origin, compared with
 #   (1) the official first-report time, and
-#   (2) the first VIIRS (S-NPP) / MODIS (Aqua+Terra) FIRMS detection within the same radius,
+#   (2) the first FIRMS detection by ANY polar orbiter (VIIRS S-NPP/NOAA-20, MODIS Aqua/Terra) within the same radius,
 #       computed by eval/run_eval.py from the FIRMS yearly archive (keyless download:
 #       firms.modaps.eosdis.nasa.gov/data/country/{viirs-snpp,modis}/2023/*_United_States.csv).
-#       NOAA-20 is not in the keyless archive, so "first VIIRS" here means S-NPP.
+#       NOAA-20 is not in the keyless archive; with FIRMS_MAP_KEY run_eval adds it via the API.
 # Secondary metric: per-frame precision on negative days (any review in a frame with no
 # fire = false-alarm frame) and on positive frames (reviews not near any known fire).
 #
@@ -117,3 +117,9 @@ negatives:
       Near-solstice afternoon: GOES-18 specular point nearest Hawaiʻi ~13:00–15:00 HST.
       Kīlauea summit erupting 7–19 Jun 2023 (USGS HVO).
     frames_utc: [2023-06-15T22:31Z, 2023-06-15T23:31Z, 2023-06-16T00:31Z]
+  - id: cloudy_0128
+    kind: cloudy
+    label_source: >-
+      Measured: 84% of land pixels C13 < 273 K at 2023-01-28 23:01Z (eval/logs/cloudy.log);
+      winter, no wildfire reports found; Kīlauea summit erupting (USGS HVO).
+    frames_utc: [2023-01-28T20:01Z, 2023-01-28T23:01Z, 2023-01-29T01:01Z, 2023-01-29T09:01Z]

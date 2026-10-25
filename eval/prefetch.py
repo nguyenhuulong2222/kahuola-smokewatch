@@ -35,10 +35,12 @@ def load_cases(path=CASES) -> dict:
         return yaml.safe_load(f)
 
 
-def target_scans(case: dict, step_min: int = 5) -> list[str]:
+def target_scans(case: dict, step_min: int = 5, horizon_min: int | None = None) -> list[str]:
     """Scan keys an event window (every scan) or a negative case (given frames) runs on."""
     if "window_utc" in case:
         t0, t1 = map(parse_t, case["window_utc"])
+        if horizon_min:
+            t1 = min(t1, t0 + dt.timedelta(minutes=horizon_min))
         keys = goes.keys_between(t0, t1)
         # PACUS is 5-min; thin to step_min in case a mode change gives more scans
         out, last = [], None
@@ -72,6 +74,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", default="")
     ap.add_argument("--workers", type=int, default=6)
+    ap.add_argument("--horizon-min", type=int, default=None, help="only the first N min of each window")
     a = ap.parse_args(argv)
     cfg = load_cases()
     cache = cfg.get("frames_dir", ".cache/goes")
@@ -81,7 +84,7 @@ def main(argv=None):
     cases.sort(key=lambda c: order.index(c["id"]) if c["id"] in order else 0)
     keys: dict[str, None] = {}
     for c in cases:
-        ks = needed_keys(target_scans(c, cfg.get("step_min", 5)))
+        ks = needed_keys(target_scans(c, cfg.get("step_min", 5), a.horizon_min))
         print(f"{c['id']}: {len(ks)} scans", flush=True)
         keys.update(dict.fromkeys(ks))
     todo = [k for k in keys

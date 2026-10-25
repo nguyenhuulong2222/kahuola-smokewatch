@@ -1,17 +1,22 @@
 """Replay SmokeWatch on eval/cases.yaml and write eval/results.{md,json}.
 
-  FIRMS_ARCHIVE_DIR=.cache/firms python eval/run_eval.py [--only lahaina_pm,olinda]
+  FIRMS_ARCHIVE_DIR=.cache/firms python eval/run_eval.py [--only lahaina_pm,olinda] [--resume]
 
 Every case runs in its own LocalStore (eval/runs/<id>/), so rechecks from one case can
-never leak into another. Events replay every 5-min scan of their window in order (the
+never leak into another. Each finished case is checkpointed to eval/runs/<id>/records.json;
+--resume reuses those and only runs the missing cases (a killed run continues, not restarts). Events replay every 5-min scan of their window in order (the
 agent sees only the past: earlier scans, background days, FIRMS passes before the scan).
 
 Metrics
   * time to detection: first scan with a review within radius_km of the origin, vs the
-    official first-report time and vs the first S-NPP VIIRS / MODIS FIRMS detection;
+    official first-report time and vs the first detection by ANY polar orbiter in FIRMS
+    (S-NPP VIIRS, MODIS Aqua/Terra from the keyless archive; NOAA-20 VIIRS too when
+    FIRMS_MAP_KEY is set — fetched once into the archive dir);
     also the first raw thermal anomaly (before the agent's 2-scan persistence rule);
-  * per-frame precision: a review is TP if within radius of a known fire that has started
-    (official time − 2 h slack, since some report times are approximate), else FP;
+  * per-frame precision, attributed at EVENT level: a review is TP if it lies within radius
+    of ANY known fire in cases.yaml that has started (official time − 2 h slack, since some
+    report times are approximate) — e.g. Olinda hotspots seen in Lahaina frames are TP;
+    FP only when it matches no known fire;
     any review on a negative-day frame is FP. Frames shared by two cases count once.
 """
 from __future__ import annotations
@@ -60,12 +65,27 @@ def hm(m) -> str:
 
 
 def firms_first(cfg_dir: str, origin, radius_km: float, after: dt.datetime) -> dict:
+    """First detection per polar sensor within radius after `after` (sensor -> time)."""
     pts = firms.archive_points(cfg_dir, after, after + dt.timedelta(days=2))
-    out = {}
-    for src in ("VIIRS_SNPP", "MODIS"):
-        hits = sorted(p["t"] for p in pts if p["src"] == src and km((p["lat"], p["lon"]), origin) <= radius_km)
-        out[src] = hits[0] if hits else None
+    out: dict[str, dt.datetime] = {}
+    for p in sorted(pts, key=lambda p: p["t"]):
+        if km((p["lat"], p["lon"]), origin) <= radius_km:
+            out.setdefault(p["src"], p["t"])
     return out
+
+
+def ensure_noaa20(archive: str, cfg) -> str:
+    """With FIRMS_MAP_KEY, add VIIRS_NOAA20_SP for the event days to the archive dir."""
+    if not os.environ.get("FIRMS_MAP_KEY"):
+        return "NOAA-20 not included (no FIRMS_MAP_KEY; not in the keyless archive)"
+    days = sorted({parse_t(e["first_report_utc"]).date() for e in cfg["events"]})
+    path = os.path.join(archive, f"noaa20_sp_{days[0]:%Y%m%d}.csv")
+    if not os.path.exists(path):
+        n = firms.download_area("VIIRS_NOAA20_SP", (-160.6, 18.5, -154.6, 22.6), days[0],
+                                (days[-1] - days[0]).days + 3, path)
+        print(f"FIRMS NOAA-20: {n} rows -> {path}", flush=True)
+    firms._archive.cache_clear()
+    return "NOAA-20 included (FIRMS API, VIIRS_NOAA20_SP)"
 
 
 def known_fires(cfg) -> list[dict]:
@@ -94,6 +114,8 @@ def run_case(case, cfg, cache, policy_name) -> list[dict]:
         return goes.fetch_frame(t, "C", cache)
 
     recs = []
+    stop_origin = tuple(case["origin"]) if "origin" in case else None
+    extra = 0
     for key in target_scans(case, cfg.get("step_min", 5)):
         t0 = time.time()
         frame = goes.load_key(key, cache)
@@ -128,8 +150,30 @@ def run_case(case, cfg, cache, policy_name) -> list[dict]:
         n_rev = sum(a["action"] == "request_human_review" for a in anoms)
         print(f"  {case['id']} {frame.time:%m-%d %H:%M}Z cand {len(anoms)} review {n_rev} "
               f"({t_bg + t_scan:.1f}s)", flush=True)
-        if case.get("stop_after_review") and n_rev:
-            break
+        # decisions depend only on this scan, the 2 before it and the background, so once the
+        # event is detected a couple more scans add nothing to time-to-detection
+        if stop_origin:
+            near = [c for c in anoms if c["action"] == "request_human_review"
+                    and km((c["lat"], c["lon"]), stop_origin) <= case["radius_km"]]
+            extra = extra + 1 if (near or extra) else 0
+            if extra > 2:
+                break
+    return recs
+
+
+def cached_case(case, cfg, cache, policy_name, resume: bool) -> list[dict]:
+    path = os.path.join(HERE, "runs", case["id"], "records.json")
+    if resume and os.path.exists(path):
+        with open(path) as f:
+            recs = json.load(f)
+        for r in recs:
+            r["time"] = parse_t(r["time"])
+        print(f"  resumed {len(recs)} scans from {os.path.relpath(path, HERE)}", flush=True)
+        return recs
+    recs = run_case(case, cfg, cache, policy_name)
+    with open(path + ".part", "w") as f:
+        json.dump(recs, f, default=str)
+    os.replace(path + ".part", path)
     return recs
 
 
@@ -153,14 +197,17 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", default="")
     ap.add_argument("--policy", default="rules")
+    ap.add_argument("--resume", action="store_true", help="reuse checkpointed cases")
     a = ap.parse_args(argv)
     cfg = load_cases()
     cache = cfg.get("frames_dir", ".cache/goes")
     archive = os.environ.get("FIRMS_ARCHIVE_DIR", ".cache/firms")
     os.environ["FIRMS_ARCHIVE_DIR"] = archive
+    polar_note = ensure_noaa20(archive, cfg)
     only = set(filter(None, a.only.split(",")))
     fires = known_fires(cfg)
     results = {"generated_utc": dt.datetime.now(dt.timezone.utc).isoformat(), "policy": a.policy,
+               "polar_sensors_note": polar_note,
                "events": [], "negatives": [], "frames": []}
     frames_seen: dict[str, dict] = {}
     gallery = os.path.join(HERE, "failures")
@@ -170,7 +217,7 @@ def main(argv=None):
         if only and ev["id"] not in only:
             continue
         print(f"[event] {ev['id']}", flush=True)
-        recs = run_case(ev, cfg, cache, a.policy)
+        recs = cached_case(ev, cfg, cache, a.policy, a.resume)
         origin, rad = tuple(ev["origin"]), ev["radius_km"]
         report = parse_t(ev["first_report_utc"])
         first_anom = first_rev = None
@@ -182,14 +229,13 @@ def main(argv=None):
                 first_rev = r["time"]
                 first_rev_rec = r
         ff = firms_first(archive, origin, rad, report - dt.timedelta(hours=3))
-        viirs = ff["VIIRS_SNPP"]
-        polar = min([x for x in ff.values() if x], default=None)
+        polar_sensor = min(ff, key=ff.get) if ff else None
+        polar = ff.get(polar_sensor)
         row = {"id": ev["id"], "name": ev["name"], "first_report": report, "origin": origin,
                "radius_km": rad, "time_source": ev["time_source"], "origin_source": ev["origin_source"],
                "scans": len(recs), "first_anomaly": first_anom, "first_review": first_rev,
-               "firms_first_viirs_snpp": viirs, "firms_first_modis": ff["MODIS"],
+               "firms_first_by_sensor": ff, "first_polar": polar, "first_polar_sensor": polar_sensor,
                "review_minus_report_min": mins(first_rev, report),
-               "review_minus_viirs_min": mins(first_rev, viirs),
                "review_minus_first_polar_min": mins(first_rev, polar), "gallery": []}
         if first_rev is None:
             mid = recs[len(recs) // 2] if recs else None
@@ -207,7 +253,7 @@ def main(argv=None):
         if only and neg["id"] not in only:
             continue
         print(f"[negative] {neg['id']}", flush=True)
-        recs = run_case(neg, cfg, cache, a.policy)
+        recs = cached_case(neg, cfg, cache, a.policy, a.resume)
         t0 = min(r["time"] for r in recs) - dt.timedelta(hours=12)
         t1 = max(r["time"] for r in recs)
         veg = [p for p in firms.archive_points(archive, t0, t1) if p["type"] in ("0", "2", "3")]
@@ -265,21 +311,55 @@ def main(argv=None):
     print("wrote eval/results.md, eval/results.json")
 
 
+def _dur(m: int) -> str:
+    m = abs(m)
+    if m < 60:
+        return f"{m} min"
+    h = m / 60
+    return f"~{h:.0f} h" if h >= 3 else f"{m // 60} h {m % 60:02d} min"
+
+
+def say(e) -> str:
+    """Plain statement of the timing. Compares with the first REPORT (not with when people
+    first noticed the fire) and with the first polar-orbiter pass."""
+    if e["first_review"] is None:
+        return f"not detected by GOES in {e['scans']} scans."
+    out = []
+    d = e["review_minus_report_min"]
+    out.append(f"GOES review {_dur(d)} {'after' if d >= 0 else 'before'} the official first report")
+    p = e["review_minus_first_polar_min"]
+    if p is None:
+        out.append("no polar-orbiter detection within 2 days")
+    else:
+        out.append(f"{_dur(p)} {'before' if p < 0 else 'after'} the first polar-orbiter detection "
+                   f"({e['first_polar_sensor']})")
+    return ", ".join(out) + "."
+
+
 def write_md(R):
     L = ["# SmokeWatch evaluation", "",
          f"Generated {R['generated_utc'][:16]}Z · policy `{R['policy']}` · "
          f"{R['precision']['unique_frames']} unique GOES-18 PACUS scans. Cases: `eval/cases.yaml`.", "",
          "## Time to detection", "",
          "First GOES scan where the agent queued a human review within the radius of the origin, vs the "
-         "official first report and vs the first polar-orbiter (FIRMS) detection. Negative = earlier.", "",
+         "official first-report time and vs the first FIRMS detection by any polar-orbiting sensor. "
+         f"Polar sensors: {R['polar_sensors_note']}; S-NPP VIIRS and MODIS Aqua/Terra from the FIRMS archive. "
+         "Δ: + = GOES later, − = GOES earlier.", "",
          "| Fire | Official first report | First thermal anomaly | **First GOES review** | Δ vs report "
-         "| First VIIRS (S-NPP) | First MODIS | **Δ vs first FIRMS** |",
-         "|---|---|---|---|---|---|---|---|"]
+         "| First polar-orbiter detection (sensor) | **Δ vs first polar** |",
+         "|---|---|---|---|---|---|---|"]
     for e in R["events"]:
         L.append(f"| {e['name']} | {fmt(e['first_report'])} | {fmt(e['first_anomaly'])} | "
                  f"**{fmt(e['first_review'])}** | {hm(e['review_minus_report_min'])} | "
-                 f"{fmt(e['firms_first_viirs_snpp'])} | {fmt(e['firms_first_modis'])} | "
+                 f"{fmt(e['first_polar'])} ({e['first_polar_sensor'] or '—'}) | "
                  f"**{hm(e['review_minus_first_polar_min'])}** |")
+    L += ["", "In words (GOES review vs official report vs first polar-orbiter pass):", ""]
+    for e in R["events"]:
+        L.append(f"- {e['name']}: {say(e)}")
+    L += ["", "Per-sensor first detection within the radius:", ""]
+    for e in R["events"]:
+        per = ", ".join(f"{k} {fmt(v)}" for k, v in sorted(e["firms_first_by_sensor"].items(), key=lambda kv: kv[1]))
+        L.append(f"- {e['id']}: {per or 'none within 2 days'}")
     L += ["", "Sources per fire (time / origin):", ""]
     for e in R["events"]:
         L.append(f"- **{e['name']}** — time: {e['time_source']}; origin {e['origin'][0]}, {e['origin'][1]} "
