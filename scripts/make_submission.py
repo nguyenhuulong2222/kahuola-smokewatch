@@ -23,7 +23,7 @@ PREFIX = "kahuola-smokewatch/"
 CSS = """
 body{font:10.5pt/1.5 -apple-system,Helvetica,Arial,sans-serif;color:#111;max-width:none;margin:0}
 h1{font-size:22pt;margin:0 0 6pt} h2{font-size:15pt;margin:18pt 0 6pt;border-bottom:1px solid #ddd;padding-bottom:3pt}
-h3{font-size:12pt;margin:12pt 0 4pt} p,li{margin:4pt 0} code{font:9pt ui-monospace,Menlo,monospace;background:#f3f4f6;padding:0 2px}
+h2,h3{break-after:avoid} h3{font-size:12pt;margin:12pt 0 4pt} p,li{margin:4pt 0} code{font:9pt ui-monospace,Menlo,monospace;background:#f3f4f6;padding:0 2px}
 table{border-collapse:collapse;margin:8pt 0;font-size:9pt;width:100%} th,td{border:1px solid #d1d5db;padding:3pt 5pt;text-align:left;vertical-align:top}
 th{background:#f3f4f6} img{max-width:100%;display:block;margin:8pt auto} a{color:#0b6e99;text-decoration:none}
 blockquote{border-left:3px solid #ddd;margin:6pt 0;padding-left:8pt;color:#444} figure{page-break-inside:avoid;margin:10pt 0}
