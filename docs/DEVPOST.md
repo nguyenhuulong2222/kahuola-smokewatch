@@ -15,7 +15,7 @@ evidence, a human approves what is published. Lahaina: hours before the first po
 
 ## Thumbnail
 
-`video/smokewatch-thumbnail.png` (1280×720; rebuilt by `video/tools/assemble.py`)
+`video/devpost-thumbnail.png` (1500×1000, 3:2; `video/tools/thumbnail.py`). YouTube: `video/smokewatch-thumbnail.png` (1280×720).
 
 ## About the project
 
