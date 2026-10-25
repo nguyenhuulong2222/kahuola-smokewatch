@@ -12,7 +12,8 @@ http(event)  Lambda Function URL:
                GET  /api/featured         featured events + eval table
                GET  /api/days             HST days with stored scans
                GET  /api/day?date=        scan index of one HST day
-               GET  /img/{key}            302 to a presigned S3 URL (archive/, events/, static/, latest/)
+               GET  /img/{key}            archive/, events/, static/ only: images 302 to a presigned
+                                         S3 URL, .json returned inline (same origin for fetch)
                GET  /public/smoke.geojson human-approved layer, with disclaimer
                POST /review               {review_id, decision: approve|reject, token}
 
@@ -40,7 +41,7 @@ DISCLAIMER_VI = "Ước tính tự động từ vệ tinh, không thay thế c�
 DISCLAIMER_EN = ("Automated satellite estimate, human-reviewed. Not an official warning — "
                  "follow Maui Emergency Management / county alerts.")
 _ID = re.compile(r"^[0-9A-Za-z-]{1,80}$")
-_IMG = re.compile(r"^(archive|events|static|latest|reviews/img)/[0-9A-Za-z_./-]{1,200}$")
+_IMG = re.compile(r"^(archive|events|static)/[0-9A-Za-z_./-]{1,200}$")   # public prefixes only
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _SITE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "smokewatch", "site", "index.html")
 
@@ -254,6 +255,10 @@ def http(event, context=None):
             key = path[len("/img/"):]
             if not _IMG.match(key) or ".." in key:
                 return _resp(400, {"error": "bad key"})
+            if key.endswith(".json"):   # read by fetch(): a cross-origin S3 redirect fails CORS
+                b = store.get_bytes(key)
+                return (_resp(200, b.decode(), extra={"cache-control": "max-age=3600"}) if b
+                        else _resp(404, {"error": "not found"}))
             return _resp(302, "", "text/plain", {"location": store.url(key, 7200),
                                                   "cache-control": "max-age=3600"})
         if method == "GET" and path == "/api/latest":

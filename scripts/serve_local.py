@@ -2,7 +2,7 @@
 
   LOCAL_STORE=out/site python scripts/serve_local.py   ->  http://127.0.0.1:8765/
 
-/img/<key> is served straight from the folder (in AWS it is a presigned-S3 redirect);
+/img/<key> images are served straight from the folder (in AWS a presigned-S3 redirect);
 every other path goes through handler.http exactly as the Lambda Function URL would.
 """
 import mimetypes
@@ -20,7 +20,7 @@ ROOT = os.path.abspath(os.environ.get("LOCAL_STORE", "./out"))
 class H(BaseHTTPRequestHandler):
     def _go(self, method):
         u = urlsplit(self.path)
-        if u.path.startswith("/img/"):
+        if u.path.startswith("/img/") and not u.path.endswith(".json"):   # JSON goes through handler, as in AWS
             key = u.path[5:]
             p = os.path.abspath(os.path.join(ROOT, key))
             if not handler._IMG.match(key) or not p.startswith(ROOT) or not os.path.isfile(p):

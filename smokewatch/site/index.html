@@ -60,6 +60,8 @@ canvas{width:100%;display:block;border-radius:8px;background:#0b1013;image-rende
 .ticks i.r{background:var(--red)}.ticks i.y{background:var(--yel)}
 input[type=range]{width:100%;accent-color:var(--acc);margin:2px 0}
 .hours{display:flex;justify-content:space-between;font-size:.72rem;color:var(--mut)}
+.legend .dot{display:inline-block;width:9px;height:9px;border:2px solid;border-radius:50%;vertical-align:-1px}
+.legend .dia{display:inline-block;width:8px;height:8px;background:var(--cyan);transform:rotate(45deg);vertical-align:0}
 .legend{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.8rem;color:var(--mut);margin-top:8px}
 .cbar{width:180px;height:10px;border-radius:3px;background:linear-gradient(90deg,#57106e,#8a226a,#bc3754,#e45a31,#f98e09,#f9cb35,#fcffa4);position:relative}
 .cbar .thr{position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff}
@@ -128,7 +130,7 @@ footer{border-top:1px solid var(--line);margin-top:28px;padding-top:12px;font-si
     </div>
     <div class="legend"><span class="cbar"><span class="thr" style="left:17.6%"></span></span>
       <span>3 → 20+ K above 3-day background · white tick = 6 K detection threshold</span>
-      <span>· <b style="color:var(--red)">●</b> review &nbsp;<b style="color:var(--yel)">●</b> candidate &nbsp;<b style="color:var(--cyan)">◆</b> FIRMS (prior 12 h)</span></div>
+      <span>· <i class="dot" style="border-color:var(--red)"></i> review &nbsp;<i class="dot" style="border-color:var(--yel)"></i> candidate &nbsp;<i class="dia"></i> FIRMS (prior 12 h)</span></div>
     <div id="scaninfo" class="small mut" style="margin-top:8px"></div>
     <div class="cands" id="cands"></div>
     <p class="mut small" id="dayinfo"></p>
@@ -316,14 +318,15 @@ async function draw() {
   const px = (lat, lon) => [((lon - g.lon_left) / (g.lon_right - g.lon_left) * g.cols * 3 - sx) * W / sw,
                             ((g.lat_top - lat) / (g.lat_top - g.lat_bottom) * g.rows * 3 - sy) * H / sh];
   const k = W / sw;   // screen px per archive px
+  const d = Math.max(1, W / (cv.clientWidth || W));   // canvas px per CSS px (3 on an iPhone)
   if (r && $("L_firms").checked) for (const f of r.firms || []) {
-    const [x, y] = px(f.lat, f.lon), a = Math.max(3, 1.2 * k);
+    const [x, y] = px(f.lat, f.lon), a = Math.max(3 * d, 1.2 * k);
     ctx.fillStyle = "rgba(79,209,255,.9)"; ctx.beginPath(); ctx.moveTo(x, y - a); ctx.lineTo(x + a, y); ctx.lineTo(x, y + a); ctx.lineTo(x - a, y); ctx.fill();
   }
   if (r) for (const c of r.candidates || []) {
     const [x, y] = px(c.lat, c.lon);
-    ctx.lineWidth = 3; ctx.strokeStyle = c.volcanic ? "#8a96a0" : c.review ? "#ff4747" : "#ffd23f";
-    ctx.beginPath(); ctx.arc(x, y, Math.max(9, 5 * k), 0, 2 * Math.PI); ctx.stroke();
+    ctx.lineWidth = 2 * d + 1; ctx.strokeStyle = c.volcanic ? "#8a96a0" : c.review ? "#ff4747" : "#ffd23f";
+    ctx.beginPath(); ctx.arc(x, y, Math.max(9 * d, 5 * k), 0, 2 * Math.PI); ctx.stroke();
   }
   renderScanInfo(s, r);
 }

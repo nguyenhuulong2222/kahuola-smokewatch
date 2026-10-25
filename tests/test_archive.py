@@ -80,6 +80,26 @@ def test_public_page_and_day_api(store):
 def test_img_route_only_redirects_allowed_prefixes(store):
     ok = _get("/img/static/coast.png")
     assert ok["statusCode"] == 302 and ok["headers"]["location"]
+    store.put_json("events/2023/08/08/0136Z/summary.json", {"candidates": [{"review": True}]})
+    js = _get("/img/events/2023/08/08/0136Z/summary.json")   # same origin: fetch() needs no CORS
+    assert js["statusCode"] == 200 and json.loads(js["body"])["candidates"][0]["review"]
+    assert "location" not in js["headers"]
+    assert _get("/img/events/2023/08/08/0000Z/summary.json")["statusCode"] == 404
     for bad in ("/img/reviews/pending/x.json", "/img/traces/x.json", "/img/events/../traces/x.json",
                 "/img/public/../../etc/passwd"):
         assert _get(bad)["statusCode"] == 400, bad
+
+
+def test_img_route_serves_only_public_prefixes(store):
+    for k in ("reviews/pending/r1.json", "reviews/img/r1.png", "traces/e1.json", "rechecks/e1.json",
+              "bg/frames/x.json", "latest/summary.json", "public/smoke.geojson"):
+        store.put_json(k, {"secret": True})
+    bad = ["reviews/pending/r1.json", "reviews/img/r1.png", "traces/e1.json", "rechecks/e1.json",
+           "bg/frames/x.json", "latest/summary.json",
+           "events/../reviews/pending/r1.json", "archive/../../reviews/pending/r1.json",
+           "events/%2e%2e/reviews/pending/r1.json", "events/%2E%2E%2Freviews/pending/r1.json",
+           "events/..%2freviews/pending/r1.json", "/reviews/pending/r1.json", "/etc/passwd.json",
+           "//events/x.json", "events\\..\\reviews/pending/r1.json", "Events/x.json", "eventsX/x.json"]
+    for k in bad:
+        r = _get("/img/" + k)
+        assert r["statusCode"] == 400 and "secret" not in r["body"], k
