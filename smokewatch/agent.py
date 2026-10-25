@@ -330,6 +330,7 @@ class BedrockPolicy:
     def __init__(self, model_id: str | None = None, region: str | None = None):
         import boto3
         self.model_id = model_id or os.environ["BEDROCK_MODEL_ID"]
+        self.usage: list[dict] = []   # per Converse call: tokens, stop reason, latency
         self.client = boto3.client("bedrock-runtime", region_name=region or os.environ.get("AWS_REGION"))
 
     @staticmethod
@@ -354,8 +355,12 @@ class BedrockPolicy:
             resp = self.client.converse(modelId=self.model_id, messages=msgs,
                                         system=[{"text": SYSTEM_PROMPT}],
                                         toolConfig=self._tool_config(),
-                                        inferenceConfig={"maxTokens": 1024, "temperature": 0})
-            out = resp["output"]["message"]
+                                        # current Claude models reject non-default sampling
+                                        # params; adaptive thinking needs output room
+                                        inferenceConfig={"maxTokens": 8000})
+            out = resp["output"]["message"]   # appended unchanged: reasoning blocks must round-trip
+            self.usage.append({k: resp.get("usage", {}).get(k) for k in ("inputTokens", "outputTokens")}
+                              | {"stop": resp.get("stopReason"), "ms": resp.get("metrics", {}).get("latencyMs")})
             msgs.append(out)
             uses = [c["toolUse"] for c in out["content"] if "toolUse" in c]
             if not uses:

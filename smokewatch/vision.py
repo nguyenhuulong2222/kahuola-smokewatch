@@ -57,8 +57,12 @@ def thermal_image(frame: Frame) -> np.ndarray:
     """Night background: 3.9 µm (C07) brightness temperature, warm = bright, BGR uint8.
     Cold cloud tops are dark, warm land/ocean grey, fires near white (circled in red)."""
     t = np.nan_to_num(frame.bands["C07"], nan=250.0)
-    g = np.clip((t - 250.0) / 70.0, 0, 1) ** 0.8
-    return cv2.cvtColor((g * 255).astype(np.uint8), cv2.COLOR_GRAY2BGR)
+    lo, hi = np.percentile(t, 2), np.percentile(t, 99.5)    # stretch to this scene
+    g = np.clip((t - lo) / max(hi - lo, 1.0), 0, 1)
+    img = cv2.cvtColor((g * 255).astype(np.uint8), cv2.COLOR_GRAY2BGR)
+    from .fire import land_outline
+    img[land_outline(frame)] = (200, 170, 60)                # coastlines, for orientation
+    return img
 
 
 def is_daytime(frame: Frame, p=PARAMS) -> bool:
@@ -238,6 +242,7 @@ def render_overlay(frame: Frame, mask: np.ndarray, dets: list[Detection],
         cv2.putText(img, text, (x * scale, max(y * scale - 6, 14)),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
     stamp = frame.time.strftime("GOES-18 %Y-%m-%d %H:%M UTC") + ("" if is_daytime(frame) else "  3.9um thermal (night)")
-    cv2.putText(img, stamp, (8, img.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-                (255, 255, 255), 1, cv2.LINE_AA)
+    for color, thick in (((0, 0, 0), 3), ((255, 255, 255), 1)):   # dark halo: legible on any background
+        cv2.putText(img, stamp, (8, img.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+                    color, thick, cv2.LINE_AA)
     return img

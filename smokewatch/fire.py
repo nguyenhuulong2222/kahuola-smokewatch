@@ -87,6 +87,14 @@ def land_mask(frame: Frame) -> np.ndarray:
     return cv2.dilate(m, np.ones((3, 3), np.uint8)) > 0
 
 
+def land_outline(frame: Frame) -> np.ndarray:
+    """1-px coastline (bool) from the static land mask; all False on an unknown grid."""
+    m = cv2.imread(_LAND_PNG, cv2.IMREAD_GRAYSCALE)
+    if m is None or m.shape != frame.shape:
+        return np.zeros(frame.shape, bool)
+    return cv2.morphologyEx(m, cv2.MORPH_GRADIENT, np.ones((2, 2), np.uint8)) > 0
+
+
 def volcanic_zones(frame: Frame) -> np.ndarray:
     """int8 map: zone index + 1 inside a volcanic exclusion zone, else 0."""
     out = np.zeros(frame.shape, np.int8)
