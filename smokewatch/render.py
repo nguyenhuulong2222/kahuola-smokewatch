@@ -106,7 +106,7 @@ def colorbar(width=220, height=12) -> np.ndarray:
 
 
 def composite(frame: Frame, ddt: np.ndarray | None, markers: list[dict], crop=MAUI, scale=12,
-              title: str = "") -> np.ndarray:
+              title: str = "", footer: str = "GOES-18 ABI, 2 km  |  Kahu Ola SmokeWatch") -> np.ndarray:
     """Baked frame for video: base + ΔT + coast + markers, cropped, labelled in HST."""
     g = geo(frame)
     r0 = int((g["lat_top"] - crop[1]) / (g["lat_top"] - g["lat_bottom"]) * g["rows"])
@@ -124,7 +124,11 @@ def composite(frame: Frame, ddt: np.ndarray | None, markers: list[dict], crop=MA
         color = (40, 40, 255) if m.get("review") else (0, 215, 255)
         cv2.circle(img, (x, y), int(2.2 * scale), color, 3, cv2.LINE_AA)
         if m.get("text"):
-            _text(img, m["text"], (x + int(2.6 * scale), y + 5), 0.55, color)
+            tw = cv2.getTextSize(m["text"], cv2.FONT_HERSHEY_SIMPLEX, 0.55, 1)[0][0]
+            tx = x + int(2.6 * scale)
+            if tx + tw > img.shape[1] - 6:   # no room on the right: label on the left
+                tx = x - int(2.6 * scale) - tw
+            _text(img, m["text"], (tx, y + 5), 0.55, color)
     _text(img, hst_label(frame.time), (12, 28), 0.75)
     if title:
         _text(img, title, (12, 54), 0.55, (200, 230, 255))
@@ -134,7 +138,7 @@ def composite(frame: Frame, ddt: np.ndarray | None, markers: list[dict], crop=MA
     img[y0:y0 + bar.shape[0], x0:x0 + bar.shape[1]] = bar
     _text(img, f"{ANOM_MIN_K:.0f}", (x0, y0 - 6), 0.42)
     _text(img, f"{ANOM_MAX_K:.0f}+ K above 3-day background", (x0 + 30, y0 - 6), 0.42)
-    _text(img, "GOES-18 ABI, 2 km  |  Kahu Ola SmokeWatch", (12, h - 12), 0.45, (210, 210, 210))
+    _text(img, footer, (12, h - 12), 0.4, (210, 210, 210))
     return img
 
 
@@ -228,6 +232,7 @@ def archive_scan(store, frame: Frame, bg, summary: dict, root="archive") -> dict
     ddt = anomaly_field(frame, bg)
     write_static(store, frame)
     rec = scan_record(summary, candidates_from_summary(summary))
+    rec["mode"] = "live"
     roots = [root] + (["events"] if any(c["review"] for c in rec["candidates"]) else [])
     for r in roots:
         prefix = scan_prefix(r, frame.time)

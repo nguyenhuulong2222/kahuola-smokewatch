@@ -36,7 +36,12 @@ section{margin:22px 0}
 .case>*{min-width:0}.trace code{overflow-wrap:anywhere}
 @media (max-width:760px){.case{grid-template-columns:1fr}.tl .m{width:92px;font-size:.68rem}.tl .m b{display:block}}
 video,.case img{width:100%;border-radius:8px;background:#000;display:block}
-.trace ol{margin:.4rem 0;padding-left:1.2rem}.trace li{margin:.35rem 0}
+.trace ol{margin:.4rem 0;padding-left:1.2rem}
+.tcols{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tcol{background:#0f161b;border-radius:8px;padding:8px 10px;min-width:0}
+@media (max-width:1000px){.tcols{grid-template-columns:1fr}}
+.tlab{font-weight:600;font-size:.85rem;padding-left:8px;border-left:3px solid}.tlab.claude{border-color:var(--acc)}.tlab.rules{border-color:#9aa7b1}
+.mode{display:inline-block;margin:0 0 8px;padding:3px 10px;border-radius:6px;font-size:.82rem;font-weight:600}
+.mode.replay{background:#26313a;color:#cfd8de}.mode.live{background:rgba(62,207,142,.15);color:var(--ok)}.trace li{margin:.35rem 0}
 .trace code{font-size:.82rem;background:#0b1013;padding:1px 5px;border-radius:4px}
 .pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:.75rem;font-weight:600}
 .p-review{background:var(--red);color:#fff}.p-recheck{background:var(--yel);color:#201a00}.p-dismiss{background:#55626c;color:#fff}.p-none{background:var(--line)}
@@ -114,6 +119,7 @@ footer{border-top:1px solid var(--line);margin-top:28px;padding-top:12px;font-si
       <label><input type="checkbox" id="L_firms" checked> FIRMS points</label>
       <label><input type="checkbox" id="L_coast" checked> Coastline</label>
     </div>
+    <div class="mode replay" id="mode"></div>
     <div class="stage"><canvas id="cv" width="900" height="618"></canvas><div class="when" id="when">—</div></div>
     <div class="slider">
       <div class="ticks" id="ticks"></div>
@@ -196,22 +202,22 @@ async function loadFeatured() {
 }
 
 function renderTrace(c) {
-  const p = c.perception, steps = c.steps, o = c.outcome;
+  const p = c.perception;
   const res = s => {
     const r = s.result || {};
-    if (s.tool === "track_plume") return `hotspot in <b>${r.hotspot_scans}/${r.scans_checked}</b> scans (${(r.scans || []).map(x => x.time).join(", ")}) → persistent: <b>${r.persistent}</b>; smoke plume attached: ${r.smoke?.attached_plume ? "yes" : "no"}`;
-    if (s.tool === "query_firms") return `${r.count} VIIRS/MODIS detections in the prior 24 h <span class="mut">(first polar detection came at 07:50Z)</span>`;
-    if (s.tool === "request_human_review") return `queued for a human: <code>${esc(r.queued)}</code>`;
+    if (s.tool === "track_plume") return `hotspot in <b>${r.hotspot_scans}/${r.scans_checked}</b> scans (${(r.scans || []).map(x => x.time).join(", ")}) → persistent: <b>${r.persistent}</b>; plume attached: ${r.smoke?.attached_plume ? "yes" : "no"}`;
+    if (s.tool === "query_firms") return `${r.count} VIIRS/MODIS detections in the prior 24 h`;
+    if (s.tool === "request_human_review") return `queued for a human`;
     return esc(JSON.stringify(r));
   };
-  $("trace").innerHTML = `<b>Agent trace — scan 01:36Z (15:36 HST)</b>
-  <p class="mut small">Claude via tool use (${esc(c.model)}); every number below comes from a tool result.</p>
-  <ol>
-   <li><b>Perception</b> (OpenCV): thermal anomaly at ${p.centroid[1].toFixed(2)}°N ${Math.abs(p.centroid[0]).toFixed(2)}°W — ΔT <b>+${p.max_ddt_k} K</b> over the 3-day background, ${p.hot_px} px of 2 km.</li>
-   ${steps.map(s => `<li><b>${s.tool === "request_human_review" ? "Action" : "Tool"}</b> <code>${esc(s.tool)}</code>: ${res(s)}</li>`).join("")}
-   <li><b>Decision</b>: <span class="pill p-review">review</span> “${esc(o.rationale)}”</li>
-  </ol>
-  <p class="small mut">15 minutes earlier (01:21Z) the same hotspot was in 1 of 3 scans, so the agent re-checked instead of alerting. Review is gated in code (≥ 2 scans, <code>track_plume</code> run, outside volcanic zones); the model's confidence (${o.confidence}) is shown to the reviewer but is not a threshold. The agent cannot publish.</p>`;
+  const col = (k, a) => `<div class="tcol"><div class="tlab ${k}">${esc(a.label)}</div>
+    <ol>${a.steps.map(s => `<li><code>${esc(s.tool)}</code> ${res(s)}</li>`).join("")}
+    <li><span class="pill p-review">review</span> confidence ${a.outcome.confidence}<div class="mut small">“${esc(a.outcome.rationale)}”</div></li></ol>
+    ${a.llm ? `<div class="mut small">${esc(a.model)} · ${a.llm.calls} model calls · ${a.llm.input_tokens.toLocaleString()} in / ${a.llm.output_tokens.toLocaleString()} out tokens · ${(a.llm.latency_ms / 1000).toFixed(1)} s (whole scan, 3 candidates)</div>` : `<div class="mut small">Deterministic; no model call.</div>`}</div>`;
+  $("trace").innerHTML = `<b>Agent trace — scan 01:36Z (15:36 HST), Lahaina candidate</b>
+  <p class="small" style="margin:.4rem 0"><b>Perception</b> (OpenCV): thermal anomaly at ${p.centroid[1].toFixed(2)}°N ${Math.abs(p.centroid[0]).toFixed(2)}°W — ΔT <b>+${p.max_ddt_k} K</b> over the 3-day background, ${p.hot_px} px of 2 km. No polar-orbiter detection yet (first: MODIS Terra 07:50Z).</p>
+  <div class="tcols">${col("claude", c.claude)}${col("rules", c.rules)}</div>
+  <p class="small mut">Both policies call the same tools and reach the same decision; 15 min earlier (01:21Z) both re-checked the then single-scan hotspot. Review is gated in code (≥ 2 scans, <code>track_plume</code> run, outside volcanic zones); confidence is shown to the reviewer, not used as a threshold. Neither policy can publish.</p>`;
 }
 
 function renderEval(ev) {
@@ -322,9 +328,14 @@ async function draw() {
   renderScanInfo(s, r);
 }
 function renderScanInfo(s, r) {
+  const live = r && r.mode === "live";
+  $("mode").className = "mode " + (live ? "live" : "replay");
+  $("mode").textContent = !r ? "" : live
+    ? (r.policy === "anthropic" || r.policy === "bedrock" ? "Live — Claude agent" : `Live — ${r.policy} policy`)
+    : "Historical replay — decisions by rule policy";
   if (!r) { $("scaninfo").textContent = ""; $("cands").innerHTML = ""; return; }
   const bg = r.background_scans ? `background from ${r.background_scans} reference scans` : "no 3-day background available for this scan";
-  $("scaninfo").textContent = `${r.daytime ? "Day: true color" : "Night: dark base, thermal anomaly only"} · ${bg}` + (r.agent_run === false ? " · agent not run on this replay scan (outside the evaluated windows)" : r.policy ? ` · decisions by ${r.policy === "rules" ? "RulePolicy (evaluation replay)" : r.policy}` : "");
+  $("scaninfo").textContent = `${r.daytime ? "Day: true color" : "Night: dark base, thermal anomaly only"} · ${bg}` + (r.agent_run === false ? " · agent not run on this replay scan (outside the evaluated windows)" : "");
   const act = a => a === "request_human_review" ? ["review", "p-review", "rv"] : a === "schedule_recheck" ? ["re-check", "p-recheck", "rc"] : a === "dismiss" ? ["dismissed", "p-dismiss", ""] : ["—", "p-none", ""];
   $("cands").innerHTML = (r.candidates || []).map(c => { const [t, pc, cc] = act(c.action);
     return `<div class="cand ${cc}"><span class="pill ${pc}">${t}</span> <b>${c.lat.toFixed(2)}°N ${Math.abs(c.lon).toFixed(2)}°W</b> · +${c.max_ddt_k} K · ${c.hot_px} px${c.volcanic ? " · volcanic zone (" + esc(c.volcanic) + ")" : ""}${c.confidence != null ? " · model confidence " + c.confidence : ""}

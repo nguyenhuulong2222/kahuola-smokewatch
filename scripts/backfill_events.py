@@ -16,12 +16,13 @@ import glob
 import json
 import os
 import sys
+import tempfile
 
 import cv2
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from smokewatch import fire, firms, goes, render, vision  # noqa: E402
+from smokewatch import agent, fire, firms, goes, render, vision  # noqa: E402
 from smokewatch.store import LocalStore  # noqa: E402
 
 UTC = dt.timezone.utc
@@ -30,6 +31,7 @@ T0 = dt.datetime(2023, 8, 8, 10, 0, tzinfo=UTC)
 T1 = T0 + dt.timedelta(days=1)
 FIRES = ["olinda", "lahaina_am", "kula", "lahaina_pm", "pulehu"]
 ANIM = (dt.datetime(2023, 8, 8, 22, 0, tzinfo=UTC), dt.datetime(2023, 8, 9, 3, 5, tzinfo=UTC))
+FOOTER = "Historical replay - rule policy"
 HOLD = {"0121Z": 8, "0136Z": 12}   # extra frames at the agent's two decisions on Lahaina
 
 
@@ -87,6 +89,7 @@ def main(argv=None):
     scans = sorted(t for t in idx if T0 <= t < T1)
     print(f"{len(scans)} cached scans on HST {DAY}, {len(ev)} with agent decisions")
     video = []
+    agent_store = LocalStore(tempfile.mkdtemp())   # rechecks carry over between replayed scans
     for i, t in enumerate(scans):
         frame = source(t)
         try:
@@ -96,13 +99,16 @@ def main(argv=None):
             bg = None
         ddt = render.anomaly_field(frame, bg)
         s = ev.get(t)
+        if s is None and bg is not None:   # outside the eval windows: same RulePolicy, run now
+            s = agent.run_scan(frame, source, agent_store, agent.RulePolicy(), background=bg)
         summary = s or {"frame_time": t.isoformat(), "daytime": vision.is_daytime(frame),
                         "background_scans": bg.n_refs if bg else 0, "policy": None, "episode": None}
         rec = render.scan_record(summary, render.candidates_from_summary(s) if s else [], firms_before(t))
         rec["agent_run"] = s is not None
+        rec["mode"] = "replay"   # viewer label: historical replay, decisions by the rule policy
+        rec["source"] = "replay (eval)" if t in ev else "replay (rule policy, run for the archive)"
         if s:   # the viewer links to /api/trace/<id>; events/ is kept, traces/ expires
             store.put_json(f"events/traces/{s['episode']}.json", s)
-        rec["source"] = "replay (eval)"
         prefix = render.scan_prefix("events", t)
         if i == 0:
             render.write_static(store, frame, force=True)
@@ -114,7 +120,18 @@ def main(argv=None):
               f"agent={'y' if s else '-'}", flush=True)
     write_video(store, a.out, video)
     print("done")
-    write_featured(store)
+    write_featured(store, ev)
+
+
+NAMED = [("Lahaina", 20.8847, -156.6630, 5.0), ("Upcountry", 20.79, -156.31, 7.0)]
+
+
+def fire_name(lat, lon):
+    import math
+    for name, la, lo, r in NAMED:
+        if math.hypot((lat - la) * 111.0, (lon - lo) * 104.0) <= r:
+            return name
+    return ""
 
 
 def markers(rec):
@@ -122,28 +139,30 @@ def markers(rec):
     for c in rec["candidates"]:
         if c.get("volcanic"):
             continue
-        label = ("REVIEW" if c["review"] else (c.get("action") or "").replace("schedule_", "")) + \
-                f" +{c['max_ddt_k']:.0f}K"
+        name = fire_name(c["lat"], c["lon"])
+        label = (name + ": " if name else "") + \
+            ("REVIEW" if c["review"] else (c.get("action") or "").replace("schedule_", "")) + \
+            f" +{c['max_ddt_k']:.0f}K"
         out.append({"lat": c["lat"], "lon": c["lon"], "review": c["review"], "text": label})
     return out
 
 
 def caption(t):
     if t < dt.datetime(2023, 8, 9, 0, 55, tzinfo=UTC):
-        return "Lahaina, 8 Aug 2023 - before the afternoon fire"
+        return "Upcountry fires (Olinda, Kula) burning since morning; Lahaina quiet"
     if t < dt.datetime(2023, 8, 9, 1, 21, tzinfo=UTC):
         return "00:55Z first official report (Lahaina)"
     if t < dt.datetime(2023, 8, 9, 1, 36, tzinfo=UTC):
-        return "01:21Z agent: hotspot in 1 of 3 scans -> re-check"
+        return "01:21Z rule policy: hotspot in 1 of 3 scans -> re-check"
     if t < dt.datetime(2023, 8, 9, 1, 51, tzinfo=UTC):
-        return "01:36Z agent: persistent 3/3 scans -> human review"
+        return "01:36Z rule policy: persistent 3/3 scans -> human review"
     return "first polar-orbiter detection: MODIS Terra 07:50Z"
 
 
 def write_video(store, out, video):
     imgs, holds = [], []
     for t, frame, ddt, rec in video:
-        imgs.append(render.composite(frame, ddt, markers(rec), title=caption(t)))
+        imgs.append(render.composite(frame, ddt, markers(rec), title=caption(t), footer=FOOTER))
         holds.append(HOLD.get(f"{t:%H%M}Z", 1) if t.date() == dt.date(2023, 8, 9) else 1)
     h, w = imgs[0].shape[:2]
     os.makedirs(os.path.join(out, "events/media"), exist_ok=True)
@@ -165,20 +184,31 @@ def write_video(store, out, video):
     # poster = the review frame
     key = next(i for i, (t, *_ ) in enumerate(video) if f"{t:%H%M}Z" == "0136Z")
     t, frame, ddt, rec = video[key]
-    ok, jpg = cv2.imencode(".jpg", render.composite(frame, ddt, markers(rec), title=caption(t)),
+    ok, jpg = cv2.imencode(".jpg", render.composite(frame, ddt, markers(rec), title=caption(t), footer=FOOTER),
                            [cv2.IMWRITE_JPEG_QUALITY, 85])
     store.put_bytes("events/media/lahaina-2023-08-08-poster.jpg", jpg.tobytes(), "image/jpeg")
 
 
-def write_featured(store):
+def write_featured(store, ev):
     r = json.load(open("eval/results.json"))
     cmp_ = json.load(open("eval/policy_compare_anthropic.json"))
     s0136 = next(s for s in cmp_["scans"] if s["time"].startswith("2023-08-09T01:36"))
-    steps = [st for st in s0136["anthropic"]["trace"] if str((st.get("args") or {}).get("det_id")) == "1"]
-    card = {"scan": "2023-08-09T01:36Z", "model": cmp_.get("model_id"),
-            "perception": s0136["candidates"]["1"],
-            "steps": [{"tool": st["tool"], "args": st["args"], "result": st["result"]} for st in steps],
-            "outcome": s0136["anthropic"]["outcomes"]["1"]}
+
+    def card(trace, outcome, label, model=None):
+        steps = [st for st in trace if "tool" in st and str((st.get("args") or {}).get("det_id")) == "1"]
+        calls = [st["llm_call"] for st in trace if "llm_call" in st]
+        return {"label": label, "model": model, "outcome": outcome,
+                "steps": [{"tool": st["tool"], "args": st["args"], "result": st["result"]} for st in steps],
+                "llm": {"calls": len(calls), "input_tokens": sum(c["input_tokens"] or 0 for c in calls),
+                        "output_tokens": sum(c["output_tokens"] or 0 for c in calls),
+                        "latency_ms": sum(c["latency_ms"] or 0 for c in calls)} if calls else None}
+    rules = next(s for t, s in ev.items() if f"{t:%Y-%m-%dT%H:%M}" == "2023-08-09T01:36")
+    card_ = {"scan": "2023-08-09T01:36Z", "perception": s0136["candidates"]["1"],
+             "claude": card(s0136["anthropic"]["trace"], s0136["anthropic"]["outcomes"]["1"],
+                            "Claude agent (Anthropic API) — run on the same replayed scan",
+                            cmp_.get("model_id")),
+             "rules": card(rules["trace"], rules["outcomes"].get("1") or rules["outcomes"].get(1),
+                           "Rule policy — the historical replay shown in the timeline")}
     events = [{k: e.get(k) for k in ("id", "name", "first_report", "first_review", "first_polar",
                                      "first_polar_sensor", "review_minus_report_min",
                                      "review_minus_first_polar_min", "time_source")} for e in r["events"]]
@@ -196,7 +226,7 @@ def write_featured(store):
                 {"t": "2023-08-09T07:50Z", "label": "First polar-orbiter detection (MODIS Terra)", "kind": "polar"}],
             "video": {"mp4": "events/media/lahaina-2023-08-08.mp4", "gif": "events/media/lahaina-2023-08-08.gif",
                       "poster": "events/media/lahaina-2023-08-08-poster.jpg"},
-            "agent_card": card}],
+            "agent_card": card_}],
         "eval": {"events": events, "precision": {k: p[k] for k in (
             "tp_reviews", "fp_reviews", "precision", "negative_frames", "false_alarm_frames",
             "fp_firms_corroborated", "precision_if_corroborated_tp")},
