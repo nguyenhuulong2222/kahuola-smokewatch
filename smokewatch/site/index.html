@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kahu Ola SmokeWatch</title>
+<meta name="description" content="GOES-18 wildfire watch for Hawaiʻi: an AI agent gathers evidence every 5–10 minutes, a human decides what is published.">
+<style>
+:root{--bg:#0d1216;--panel:#151c22;--line:#26313a;--fg:#e9eef1;--mut:#9aa7b1;--acc:#ff8a3d;
+--red:#ff4747;--yel:#ffd23f;--ok:#3ecf8e;--cyan:#4fd1ff}
+*{box-sizing:border-box}
+html,body{overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1080px;margin:auto;padding:16px}
+a{color:var(--acc)}
+h1{font-size:1.25rem;margin:0}h2{font-size:1.15rem;margin:0 0 .6rem}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;padding:6px 0 14px;border-bottom:1px solid var(--line)}
+.top nav a{margin-left:14px;font-size:.9rem}
+.mut{color:var(--mut)}.small{font-size:.85rem}
+section{margin:22px 0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+.kicker{color:var(--acc);font-weight:600;font-size:.85rem;letter-spacing:.04em;text-transform:uppercase}
+.headline{font-size:clamp(1.35rem,3.6vw,2.1rem);line-height:1.2;font-weight:700;margin:.3rem 0 .8rem}
+/* timeline */
+.tl{position:relative;height:170px;margin:4px 8px}
+.tl .bar{position:absolute;left:0;right:0;top:82px;height:4px;background:var(--line);border-radius:2px}
+.tl .span{position:absolute;top:82px;height:4px;background:linear-gradient(90deg,#9aa7b1,var(--yel),var(--red));border-radius:2px}
+.tl .dot{position:absolute;top:76px;width:16px;height:16px;border-radius:50%;transform:translateX(-50%);border:3px solid var(--panel)}
+.tl .m{position:absolute;transform:translateX(-50%);text-align:center;width:150px;font-size:.78rem;line-height:1.3}
+.tl .m.up{bottom:98px}.tl .m.down{top:100px}
+.tl .m b{font-size:.9rem;margin-right:4px}
+.tl .gap{position:absolute;top:79px;height:10px;border-top:2px dashed var(--mut);text-align:center;font-size:.8rem;color:var(--fg);font-weight:600}
+.tl .gap span{position:relative;top:4px;background:var(--panel);padding:0 6px;white-space:nowrap}
+.k-report{background:#9aa7b1}.k-recheck{background:var(--yel)}.k-review{background:var(--red)}.k-polar{background:var(--cyan)}
+.case{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;margin-top:10px}
+.case>*{min-width:0}.trace code{overflow-wrap:anywhere}
+@media (max-width:760px){.case{grid-template-columns:1fr}.tl .m{width:92px;font-size:.68rem}.tl .m b{display:block}}
+video,.case img{width:100%;border-radius:8px;background:#000;display:block}
+.trace ol{margin:.4rem 0;padding-left:1.2rem}.trace li{margin:.35rem 0}
+.trace code{font-size:.82rem;background:#0b1013;padding:1px 5px;border-radius:4px}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:.75rem;font-weight:600}
+.p-review{background:var(--red);color:#fff}.p-recheck{background:var(--yel);color:#201a00}.p-dismiss{background:#55626c;color:#fff}.p-none{background:var(--line)}
+/* viewer */
+.ctrls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.ctrls select,.ctrls input[type=date],.ctrls button{background:#0b1013;color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit}
+.ctrls button{min-width:40px;cursor:pointer}.ctrls button.on{border-color:var(--acc);color:var(--acc)}
+.chip{background:transparent;border:1px solid var(--acc)!important;color:var(--acc)!important}
+.layers label{margin-right:12px;white-space:nowrap;font-size:.9rem}
+.stage{position:relative}
+canvas{width:100%;display:block;border-radius:8px;background:#0b1013;image-rendering:auto}
+.when{position:absolute;left:10px;top:8px;background:rgba(0,0,0,.6);padding:3px 9px;border-radius:6px;font-weight:600;font-size:.9rem}
+.slider{position:relative;margin:12px 0 4px}
+.ticks{position:relative;height:10px}
+.ticks i{position:absolute;top:0;width:3px;height:10px;border-radius:1px}
+.ticks i.r{background:var(--red)}.ticks i.y{background:var(--yel)}
+input[type=range]{width:100%;accent-color:var(--acc);margin:2px 0}
+.hours{display:flex;justify-content:space-between;font-size:.72rem;color:var(--mut)}
+.legend{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.8rem;color:var(--mut);margin-top:8px}
+.cbar{width:180px;height:10px;border-radius:3px;background:linear-gradient(90deg,#57106e,#8a226a,#bc3754,#e45a31,#f98e09,#f9cb35,#fcffa4);position:relative}
+.cbar .thr{position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff}
+.cands{margin-top:10px;display:grid;gap:8px}
+.cand{border-left:4px solid var(--line);padding:6px 10px;background:#0f161b;border-radius:6px;font-size:.88rem}
+.cand.rv{border-color:var(--red)}.cand.rc{border-color:var(--yel)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--mut);font-weight:600}
+.tw{overflow-x:auto}
+.live{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.live img{width:180px;border-radius:8px;background:#000}
+.dotlive{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--ok);margin-right:6px;box-shadow:0 0 0 3px rgba(62,207,142,.2)}
+.dotlive.stale{background:var(--yel)}
+footer{border-top:1px solid var(--line);margin-top:28px;padding-top:12px;font-size:.82rem;color:var(--mut)}
+</style>
+</head>
+<body><main>
+<div class="top">
+  <div><h1>Kahu Ola SmokeWatch</h1>
+  <div class="mut small">Wildfire watch for Hawaiʻi from GOES-18, every 5 minutes. An AI agent gathers the evidence; a human decides what is published.</div></div>
+  <nav class="small"><a href="#viewer">Timeline</a><a href="#results">Results</a><a href="#live">Live</a><a href="review">Reviewer</a></nav>
+</div>
+
+<section id="case">
+  <div class="kicker">Case study · replay of real satellite data</div>
+  <div class="headline" id="headline">Lahaina, Maui — 8 Aug 2023</div>
+  <div class="panel">
+    <div class="tl" id="tl"><div class="bar"></div></div>
+    <p class="mut small" style="margin:.2rem 0 0">Times in HST (UTC−10) and UTC. “Report” is the first official report, not when people first noticed the fire.</p>
+    <div class="case">
+      <div>
+        <video id="vid" autoplay muted loop playsinline controls preload="metadata"></video>
+        <p class="mut small">GOES-18 true color over Maui, 12:00–17:05 HST. Colored cells: Δ(3.9 − 11.2 µm) above the 3-day background — what the detector sees. Circles: candidates (yellow) and human-review requests (red). Rendered with OpenCV (cv2.VideoWriter, H.264).</p>
+        <button class="chip" id="openTl" style="padding:7px 12px;border-radius:8px;cursor:pointer">▶ Open in the timeline viewer</button>
+      </div>
+      <div class="trace" id="trace"><b>Agent trace — scan 01:36Z (15:36 HST)</b><p class="mut small">Loading…</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="viewer">
+  <h2>Timeline viewer</h2>
+  <div class="panel">
+    <div class="ctrls">
+      <input type="date" id="date" aria-label="date (HST)">
+      <select id="region" aria-label="region"><option value="all">All islands</option><option value="maui">Maui</option><option value="big">Hawaiʻi Island</option></select>
+      <button id="prev" aria-label="previous scan">◀</button>
+      <button id="play" aria-label="play">▶ Play</button>
+      <button id="next" aria-label="next scan">▶|</button>
+      <select id="speed" aria-label="speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select>
+      <span class="mut small">Featured:</span><button class="chip" id="feat">Lahaina–Maui · 8 Aug 2023</button>
+    </div>
+    <div class="ctrls layers">
+      <label><input type="checkbox" id="L_base" checked> True color / base</label>
+      <label><input type="checkbox" id="L_anom" checked> ΔT anomaly</label>
+      <label><input type="checkbox" id="L_firms" checked> FIRMS points</label>
+      <label><input type="checkbox" id="L_coast" checked> Coastline</label>
+    </div>
+    <div class="stage"><canvas id="cv" width="900" height="618"></canvas><div class="when" id="when">—</div></div>
+    <div class="slider">
+      <div class="ticks" id="ticks"></div>
+      <input type="range" id="slider" min="0" max="0" value="0" aria-label="scan time">
+      <div class="hours" id="hours"></div>
+    </div>
+    <div class="legend"><span class="cbar"><span class="thr" style="left:17.6%"></span></span>
+      <span>3 → 20+ K above 3-day background · white tick = 6 K detection threshold</span>
+      <span>· <b style="color:var(--red)">●</b> review &nbsp;<b style="color:var(--yel)">●</b> candidate &nbsp;<b style="color:var(--cyan)">◆</b> FIRMS (prior 12 h)</span></div>
+    <div id="scaninfo" class="small mut" style="margin-top:8px"></div>
+    <div class="cands" id="cands"></div>
+    <p class="mut small" id="dayinfo"></p>
+  </div>
+</section>
+
+<section id="results">
+  <h2>Evaluation — 7 Hawaiʻi fires, 5 negative days</h2>
+  <div class="panel tw" id="evaltab"><p class="mut">Loading…</p></div>
+</section>
+
+<section id="live">
+  <h2>Live status</h2>
+  <div class="panel live" id="livecard"><span class="mut">Loading…</span></div>
+</section>
+
+<footer>
+  <p><b>Ước tính tự động từ vệ tinh, không thay thế cảnh báo chính thức.</b><br>
+  Automated satellite estimate, human-reviewed. Not an official warning — follow county emergency management alerts.</p>
+  <p>Archive: days stored by the live scanner (90 days) and featured events. The viewer does not fetch arbitrary dates from NOAA on demand.
+  Data: NOAA GOES-18 ABI (NODD on AWS), NASA FIRMS (VIIRS, MODIS), Natural Earth. Public layer: <a href="public/smoke.geojson">smoke.geojson</a>.</p>
+</footer>
+</main>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const HST_MS = 10 * 3600e3;
+const fmtHST = iso => { const d = new Date(Date.parse(iso) - HST_MS); return d.toISOString().slice(11, 16); };
+const fmtUTC = iso => new Date(iso).toISOString().slice(11, 16) + "Z";
+const fmtDay = iso => new Date(Date.parse(iso) - HST_MS).toUTCString().slice(0, 11);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const img = key => "img/" + key;
+const REGIONS = {maui: [20.45, 21.12, -156.80, -155.95], big: [18.85, 20.35, -156.15, -154.75]};
+const getJSON = async u => { const r = await fetch(u); if (!r.ok) throw new Error(u + " " + r.status); return r.json(); };
+
+/* ---------- case study ---------- */
+let featured = null;
+async function loadFeatured() {
+  try {
+    const f = await getJSON("api/featured");
+    featured = f.featured[0];
+    $("headline").textContent = featured.headline;
+    const tl = $("tl"), ms = featured.timeline.map(m => ({...m, ms: Date.parse(m.t)}));
+    // broken axis: the first three events are 41 min apart, the polar pass ~6 h later
+    const a0 = ms[0].ms - 6e5, a1 = ms[2].ms + 6e5;
+    const pos = x => x <= a1 ? 6 + 58 * (x - a0) / (a1 - a0) : 92;
+    const span = document.createElement("div"); span.className = "span";
+    span.style.left = pos(ms[0].ms) + "%"; span.style.width = (pos(ms[2].ms) - pos(ms[0].ms)) + "%";
+    tl.appendChild(span);
+    const gap = document.createElement("div"); gap.className = "gap";
+    gap.style.left = "67%"; gap.style.width = "22%";
+    const gh = Math.round((ms[3].ms - ms[2].ms) / 6e4);
+    gap.innerHTML = `<span>≈ ${Math.floor(gh / 60)} h ${gh % 60} min</span>`;
+    tl.appendChild(gap);
+    ms.forEach((m, i) => {
+      const dot = document.createElement("div"); dot.className = "dot k-" + m.kind;
+      dot.style.left = pos(m.ms) + "%"; tl.appendChild(dot);
+      const lab = document.createElement("div"); lab.className = "m " + (i % 2 ? "up" : "down");
+      const x = pos(m.ms); lab.style.left = x + "%";
+      lab.style.transform = `translateX(-${x > 80 ? 88 : x < 15 ? 20 : 50}%)`;   // keep edge labels inside
+      lab.innerHTML = `<b>${fmtHST(m.t)} HST</b><span class="mut">${fmtUTC(m.t)}</span><br>${esc(m.label)}`;
+      tl.appendChild(lab);
+    });
+    const v = $("vid");
+    v.poster = img(featured.video.poster);
+    v.innerHTML = `<source src="${img(featured.video.mp4)}" type="video/mp4"><img src="${img(featured.video.gif)}" alt="Lahaina animation">`;
+    v.load();
+    renderTrace(featured.agent_card);
+    renderEval(f.eval);
+  } catch (e) { $("trace").innerHTML = `<p class="mut">Case study unavailable (${esc(e.message)}).</p>`; }
+}
+
+function renderTrace(c) {
+  const p = c.perception, steps = c.steps, o = c.outcome;
+  const res = s => {
+    const r = s.result || {};
+    if (s.tool === "track_plume") return `hotspot in <b>${r.hotspot_scans}/${r.scans_checked}</b> scans (${(r.scans || []).map(x => x.time).join(", ")}) → persistent: <b>${r.persistent}</b>; smoke plume attached: ${r.smoke?.attached_plume ? "yes" : "no"}`;
+    if (s.tool === "query_firms") return `${r.count} VIIRS/MODIS detections in the prior 24 h <span class="mut">(first polar detection came at 07:50Z)</span>`;
+    if (s.tool === "request_human_review") return `queued for a human: <code>${esc(r.queued)}</code>`;
+    return esc(JSON.stringify(r));
+  };
+  $("trace").innerHTML = `<b>Agent trace — scan 01:36Z (15:36 HST)</b>
+  <p class="mut small">Claude via tool use (${esc(c.model)}); every number below comes from a tool result.</p>
+  <ol>
+   <li><b>Perception</b> (OpenCV): thermal anomaly at ${p.centroid[1].toFixed(2)}°N ${Math.abs(p.centroid[0]).toFixed(2)}°W — ΔT <b>+${p.max_ddt_k} K</b> over the 3-day background, ${p.hot_px} px of 2 km.</li>
+   ${steps.map(s => `<li><b>${s.tool === "request_human_review" ? "Action" : "Tool"}</b> <code>${esc(s.tool)}</code>: ${res(s)}</li>`).join("")}
+   <li><b>Decision</b>: <span class="pill p-review">review</span> “${esc(o.rationale)}”</li>
+  </ol>
+  <p class="small mut">15 minutes earlier (01:21Z) the same hotspot was in 1 of 3 scans, so the agent re-checked instead of alerting. Review is gated in code (≥ 2 scans, <code>track_plume</code> run, outside volcanic zones); the model's confidence (${o.confidence}) is shown to the reviewer but is not a threshold. The agent cannot publish.</p>`;
+}
+
+function renderEval(ev) {
+  const rows = ev.events.map(e => {
+    const rv = e.first_review ? fmtUTC(e.first_review.replace(" ", "T")) : null;
+    const dr = e.review_minus_report_min, dp = e.review_minus_first_polar_min;
+    const h = m => Math.abs(m) >= 90 ? `${(Math.abs(m) / 60).toFixed(1)} h` : `${Math.abs(m)} min`;
+    return `<tr><td>${esc(e.name)}</td><td>${rv ? rv : "<span class='mut'>missed</span>"}</td>
+      <td>${dr == null ? "—" : `+${h(dr)} after report`}</td>
+      <td>${dp == null ? (e.first_polar ? `<span class="mut">first polar detection ${fmtUTC(e.first_polar.replace(" ", "T"))}</span>` : "—") : (dp < 0 ? `<b>${h(dp)} before</b>` : `${h(dp)} after`)} ${esc((e.first_polar_sensor || "").replace("_", " "))}</td></tr>`;
+  }).join("");
+  const p = ev.precision;
+  $("evaltab").innerHTML = `<table><thead><tr><th>Fire</th><th>First GOES review</th><th>vs first official report</th><th>vs first polar-orbiter detection</th></tr></thead><tbody>${rows}</tbody></table>
+   <p class="small" style="margin-top:10px">Review precision <b>${p.precision}</b> (${p.tp_reviews} reviews of known fires, ${p.fp_reviews} not matching a listed fire; ${p.fp_firms_corroborated} of those are confirmed by FIRMS as real fire spread → ${p.precision_if_corroborated_tp}). Negative days: ${p.false_alarm_frames} of ${p.negative_frames} scans had a false review (mostly daytime heating of Hawaiʻi Island on a vog day).</p>
+   <p class="small mut">${esc(ev.note)} Full table, sources and failure gallery: eval/results.md in the repository.</p>`;
+}
+
+/* ---------- timeline viewer ---------- */
+const st = {date: null, idx: null, i: 0, region: "all", playing: false, timer: null, speed: 1, cache: new Map(), recCache: new Map()};
+const cv = $("cv"), ctx = cv.getContext("2d");
+
+function loadImg(src) {
+  if (st.cache.has(src)) return st.cache.get(src);
+  const p = new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
+  st.cache.set(src, p);
+  if (st.cache.size > 60) st.cache.delete(st.cache.keys().next().value);
+  return p;
+}
+function rec(s) {
+  if (!st.recCache.has(s.p)) st.recCache.set(s.p, getJSON(img(s.p + "summary.json")).catch(() => null));
+  return st.recCache.get(s.p);
+}
+async function loadDays() {
+  try { const d = await getJSON("api/days"); if (d.days.length) { $("date").min = d.days[0]; $("date").max = d.days[d.days.length - 1]; } return d.days; }
+  catch { return []; }
+}
+async function openDay(date, t, play) {
+  stop();
+  try { st.idx = await getJSON("api/day?date=" + encodeURIComponent(date)); }
+  catch { st.idx = null; $("dayinfo").textContent = `No stored scans for ${date} (HST). Only days stored by the live scanner and featured events are available.`; draw(); return; }
+  st.date = date; $("date").value = date;
+  const sc = st.idx.scans, sl = $("slider");
+  sl.max = Math.max(sc.length - 1, 0);
+  const n1 = Math.max(sc.length - 1, 1);   // ticks sit where the slider thumb will be
+  $("ticks").innerHTML = sc.map((s, k) => s.reviews || s.cands ? `<i class="${s.reviews ? "r" : "y"}" style="left:calc(8px + (100% - 16px) * ${(k / n1).toFixed(4)} - 1px)"></i>` : "").join("");
+  const lab = [0, .25, .5, .75, 1].map(f => sc.length ? sc[Math.round(f * n1)] : null);
+  $("hours").innerHTML = lab.map(s => `<span>${s ? s.hst + " HST" : ""}</span>`).join("");
+  $("dayinfo").textContent = `${sc.length} scans stored for ${date} (HST day; the slider steps scan by scan, gaps are scans not stored). Red ticks: scans with a human-review request; yellow: candidates only.` + (sc.length && sc[0].p.startsWith("events/") ? " Replay of the evaluation run." : "");
+  let i = sc.length - 1;
+  if (t) { const target = resolveT(date, t); i = nearest(sc, target); }
+  await show(i);
+  if (play) start();
+}
+function resolveT(date, t) {   // "0136Z" within the HST day: before 10:00Z belongs to the next UTC date
+  const hh = +t.slice(0, 2), mm = +t.slice(2, 4);
+  const d = new Date(date + "T00:00:00Z"); if (hh < 10) d.setUTCDate(d.getUTCDate() + 1);
+  d.setUTCHours(hh, mm); return d.getTime();
+}
+function nearest(sc, ms) { let b = 0, bd = Infinity; sc.forEach((s, k) => { const dd = Math.abs(Date.parse(s.time) - ms); if (dd < bd) { bd = dd; b = k; } }); return b; }
+function slicePx(g, region) {
+  const W = g.cols * 3, H = g.rows * 3;
+  if (region === "all" || !REGIONS[region]) return [0, 0, W, H];
+  const [la0, la1, lo0, lo1] = REGIONS[region];
+  const x0 = (lo0 - g.lon_left) / (g.lon_right - g.lon_left) * W, x1 = (lo1 - g.lon_left) / (g.lon_right - g.lon_left) * W;
+  const y0 = (g.lat_top - la1) / (g.lat_top - g.lat_bottom) * H, y1 = (g.lat_top - la0) / (g.lat_top - g.lat_bottom) * H;
+  return [x0, y0, x1 - x0, y1 - y0];
+}
+let drawSeq = 0;
+async function show(i) {
+  if (!st.idx || !st.idx.scans.length) return;
+  const sc = st.idx.scans; st.i = Math.max(0, Math.min(i, sc.length - 1));
+  $("slider").value = st.i;
+  const s = sc[st.i];
+  for (let k = 1; k <= 3; k++) { const n = sc[st.i + k]; if (n) { loadImg(img(n.p + "overlay.webp")); loadImg(img(n.p + "anomaly.png")); rec(n); } }
+  $("when").textContent = `${fmtDay(s.time)} · ${s.hst} HST · ${fmtUTC(s.time)}`;
+  history.replaceState(null, "", `?date=${st.date}&t=${s.t}${st.region !== "all" ? "&region=" + st.region : ""}#viewer`);
+  await draw();
+}
+async function draw() {
+  const seq = ++drawSeq;
+  if (!st.idx || !st.idx.scans.length) { ctx.fillStyle = "#0b1013"; ctx.fillRect(0, 0, cv.width, cv.height); return; }
+  const s = st.idx.scans[st.i], g = st.idx.geo;
+  const [sx, sy, sw, sh] = slicePx(g, st.region);
+  const W = Math.min(1400, Math.round(cv.clientWidth * (window.devicePixelRatio || 1))) || 900;
+  const H = Math.round(W * sh / sw);
+  const [base, anom, coast, r] = await Promise.all([loadImg(img(s.p + "overlay.webp")), loadImg(img(s.p + "anomaly.png")), loadImg(img("static/coast.png")), rec(s)]);
+  if (seq !== drawSeq) return;
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  ctx.fillStyle = "#0b1013"; ctx.fillRect(0, 0, W, H);
+  ctx.imageSmoothingEnabled = true;
+  if ($("L_base").checked && base) ctx.drawImage(base, sx, sy, sw, sh, 0, 0, W, H);
+  ctx.imageSmoothingEnabled = false;   // keep 2 km cells visible
+  if ($("L_anom").checked && anom) ctx.drawImage(anom, sx, sy, sw, sh, 0, 0, W, H);
+  if ($("L_coast").checked && coast) { const f = coast.width / (g.cols * 3);   // coast is drawn finer
+    ctx.imageSmoothingEnabled = true; ctx.drawImage(coast, sx * f, sy * f, sw * f, sh * f, 0, 0, W, H); }
+  const px = (lat, lon) => [((lon - g.lon_left) / (g.lon_right - g.lon_left) * g.cols * 3 - sx) * W / sw,
+                            ((g.lat_top - lat) / (g.lat_top - g.lat_bottom) * g.rows * 3 - sy) * H / sh];
+  const k = W / sw;   // screen px per archive px
+  if (r && $("L_firms").checked) for (const f of r.firms || []) {
+    const [x, y] = px(f.lat, f.lon), a = Math.max(3, 1.2 * k);
+    ctx.fillStyle = "rgba(79,209,255,.9)"; ctx.beginPath(); ctx.moveTo(x, y - a); ctx.lineTo(x + a, y); ctx.lineTo(x, y + a); ctx.lineTo(x - a, y); ctx.fill();
+  }
+  if (r) for (const c of r.candidates || []) {
+    const [x, y] = px(c.lat, c.lon);
+    ctx.lineWidth = 3; ctx.strokeStyle = c.volcanic ? "#8a96a0" : c.review ? "#ff4747" : "#ffd23f";
+    ctx.beginPath(); ctx.arc(x, y, Math.max(9, 5 * k), 0, 2 * Math.PI); ctx.stroke();
+  }
+  renderScanInfo(s, r);
+}
+function renderScanInfo(s, r) {
+  if (!r) { $("scaninfo").textContent = ""; $("cands").innerHTML = ""; return; }
+  const bg = r.background_scans ? `background from ${r.background_scans} reference scans` : "no 3-day background available for this scan";
+  $("scaninfo").textContent = `${r.daytime ? "Day: true color" : "Night: dark base, thermal anomaly only"} · ${bg}` + (r.agent_run === false ? " · agent not run on this replay scan (outside the evaluated windows)" : r.policy ? ` · decisions by ${r.policy === "rules" ? "RulePolicy (evaluation replay)" : r.policy}` : "");
+  const act = a => a === "request_human_review" ? ["review", "p-review", "rv"] : a === "schedule_recheck" ? ["re-check", "p-recheck", "rc"] : a === "dismiss" ? ["dismissed", "p-dismiss", ""] : ["—", "p-none", ""];
+  $("cands").innerHTML = (r.candidates || []).map(c => { const [t, pc, cc] = act(c.action);
+    return `<div class="cand ${cc}"><span class="pill ${pc}">${t}</span> <b>${c.lat.toFixed(2)}°N ${Math.abs(c.lon).toFixed(2)}°W</b> · +${c.max_ddt_k} K · ${c.hot_px} px${c.volcanic ? " · volcanic zone (" + esc(c.volcanic) + ")" : ""}${c.confidence != null ? " · model confidence " + c.confidence : ""}
+      <div class="mut">${esc(c.rationale || "")}</div>${r.trace_id ? `<a class="small" href="api/trace/${esc(r.trace_id)}">full agent trace</a>` : ""}</div>`; }).join("")
+    || `<div class="mut small">No thermal anomaly candidates in this scan.</div>`;
+}
+function start() { stop(); st.playing = true; $("play").textContent = "❚❚ Pause"; $("play").classList.add("on");
+  st.timer = setInterval(() => { if (st.i >= st.idx.scans.length - 1) return stop(); show(st.i + 1); }, 700 / st.speed); }
+function stop() { st.playing = false; clearInterval(st.timer); $("play").textContent = "▶ Play"; $("play").classList.remove("on"); }
+
+$("slider").oninput = e => { stop(); show(+e.target.value); };
+$("prev").onclick = () => { stop(); show(st.i - 1); };
+$("next").onclick = () => { stop(); show(st.i + 1); };
+$("play").onclick = () => st.playing ? stop() : start();
+$("speed").onchange = e => { st.speed = +e.target.value; if (st.playing) start(); };
+$("region").onchange = e => { st.region = e.target.value; show(st.i); };
+$("date").onchange = e => openDay(e.target.value);
+["L_base", "L_anom", "L_firms", "L_coast"].forEach(id => $(id).onchange = draw);
+const openFeatured = () => { $("region").value = st.region = featured?.region || "maui";
+  openDay(featured?.date || "2023-08-08", featured?.t || "0030Z", true); $("viewer").scrollIntoView({behavior: "smooth"}); };
+$("feat").onclick = openFeatured; $("openTl").onclick = openFeatured;
+window.addEventListener("resize", () => draw());
+document.addEventListener("keydown", e => { if (e.target.tagName === "INPUT" && e.target.type !== "range") return;
+  if (e.key === "ArrowLeft") { stop(); show(st.i - 1); } if (e.key === "ArrowRight") { stop(); show(st.i + 1); } });
+
+/* ---------- live status ---------- */
+async function loadLive() {
+  const el = $("livecard");
+  try {
+    const L = await getJSON("api/latest");
+    if (!L.frame_time) { el.innerHTML = `<span class="mut">The live scanner has not run yet. It runs every 10 minutes and first builds a 3-day thermal background.</span>`; return; }
+    const age = (Date.now() - Date.parse(L.frame_time)) / 60e3;
+    const healthy = age < 35 && !(L.errors || []).some(x => !/bootstrapping/.test(x));
+    const n = L.candidates || 0, nrev = Object.values(L.outcomes || {}).filter(o => o.action === "request_human_review").length;
+    const state = nrev ? `<b style="color:var(--red)">${nrev} detection(s) waiting for human review</b>` : n ? `${n} candidate(s), none needing review` : "no fire detected";
+    el.innerHTML = `${L.thumb ? `<img src="${img(L.thumb)}" alt="latest scan">` : ""}
+      <div><div><span class="dotlive ${healthy ? "" : "stale"}"></span><b>Live</b> — scanning every 10 min · last scan ${fmtHST(L.frame_time)} HST (${fmtUTC(L.frame_time)}) · ${state} · ${healthy ? "system healthy" : "last scan is " + Math.round(age) + " min old"}</div>
+      <p class="mut small" style="margin:.4rem 0 0">Silence is the normal, good state: most scans contain no fire. Background from ${L.background_scans} reference scans · policy <code>${esc(L.policy)}</code>.
+      <a href="#" id="today">Open today in the timeline</a> · <a href="review">Reviewer page</a></p></div>`;
+    $("today") && ($("today").onclick = ev => { ev.preventDefault(); $("region").value = st.region = "all";
+      openDay(new Date(Date.parse(L.frame_time) - HST_MS).toISOString().slice(0, 10)); $("viewer").scrollIntoView({behavior: "smooth"}); });
+  } catch (e) { el.innerHTML = `<span class="mut">Live status unavailable.</span>`; }
+}
+
+(async function init() {
+  const q = new URLSearchParams(location.search);
+  await Promise.all([loadFeatured(), loadDays(), loadLive()]);
+  if (q.get("date")) {
+    st.region = q.get("region") || (q.get("date") === "2023-08-08" ? "maui" : "all"); $("region").value = st.region;
+    await openDay(q.get("date"), q.get("t"), q.get("play") === "1");
+    $("viewer").scrollIntoView();
+  } else {
+    st.region = "maui"; $("region").value = "maui";
+    await openDay(featured?.date || "2023-08-08", "0136Z", false);
+  }
+})();
+</script>
+</body>
+</html>

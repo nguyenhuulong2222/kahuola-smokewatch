@@ -81,6 +81,10 @@ Resources:
             Status: Enabled
             Prefix: rechecks/
             ExpirationInDays: 2
+          - Id: expire-archive   # live scan archive; reviewed scans are also copied to events/ (kept)
+            Status: Enabled
+            Prefix: archive/
+            ExpirationInDays: 90
           - Id: expire-background-frames   # 3-day background + margin
             Status: Enabled
             Prefix: bg/frames/

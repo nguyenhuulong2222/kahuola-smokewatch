@@ -29,7 +29,7 @@ def req(method, path, body=None):
 
 
 def test_review_page_lists_pending(store):
-    r = handler.http(req("GET", "/"))
+    r = handler.http(req("GET", "/review"))
     assert r["statusCode"] == 200 and "20230809T0131Z-abc123-1" in r["body"]
     assert handler.DISCLAIMER_VI in r["body"]
 
@@ -75,12 +75,12 @@ def test_empty_server_token_refuses_everything(store, monkeypatch):
 def test_page_before_first_scan(tmp_path, monkeypatch):
     monkeypatch.delenv("BUCKET", raising=False)
     monkeypatch.setenv("LOCAL_STORE", str(tmp_path))
-    body = handler.http(req("GET", "/"))["body"]
+    body = handler.http(req("GET", "/review"))["body"]
     assert "No scan has run yet" in body and "No overlay yet" in body and "<img" not in body
 
 
 def test_page_shows_utc_and_hst(store):
-    body = handler.http(req("GET", "/"))["body"]
+    body = handler.http(req("GET", "/review"))["body"]
     assert "2023-08-09 01:31 UTC · 15:31 HST (Aug 08)" in body
     assert "No overlay yet" in body          # summary exists but no overlay.png
 

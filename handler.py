@@ -5,9 +5,14 @@ scan(event)  EventBridge rate(10 minutes). Runs the fire-anchored detector + tri
              night (the Olinda fire started at 00:22 HST); smoke evidence is daytime-only.
              Replay: {"time": "2023-08-09T01:31Z"}.
 http(event)  Lambda Function URL:
-               GET  /                     review page (HTML)
+               GET  /, /archive           public page: case study, timeline viewer, live status
+               GET  /review               reviewer page (HTML)
                GET  /api/latest           latest scan summary (JSON)
                GET  /api/trace/{episode}  full agent trace (JSON)
+               GET  /api/featured         featured events + eval table
+               GET  /api/days             HST days with stored scans
+               GET  /api/day?date=        scan index of one HST day
+               GET  /img/{key}            302 to a presigned S3 URL (archive/, events/, static/, latest/)
                GET  /public/smoke.geojson human-approved layer, with disclaimer
                POST /review               {review_id, decision: approve|reject, token}
 
@@ -27,7 +32,7 @@ import os
 import re
 import time
 
-from smokewatch import agent, fire, goes
+from smokewatch import agent, fire, goes, render
 from smokewatch.store import default_store
 
 CACHE = os.environ.get("GOES_CACHE", "/tmp/goes")
@@ -35,6 +40,9 @@ DISCLAIMER_VI = "Ước tính tự động từ vệ tinh, không thay thế c�
 DISCLAIMER_EN = ("Automated satellite estimate, human-reviewed. Not an official warning — "
                  "follow Maui Emergency Management / county alerts.")
 _ID = re.compile(r"^[0-9A-Za-z-]{1,80}$")
+_IMG = re.compile(r"^(archive|events|static|latest|reviews/img)/[0-9A-Za-z_./-]{1,200}$")
+_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_SITE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "smokewatch", "site", "index.html")
 
 
 # ------------------------------------------------------------------ scan
@@ -150,6 +158,12 @@ def scan(event, context=None):
                              background=bg, fetch_background=False)
     latest = store.get_json("latest/summary.json", {})
     latest["frame_cache"] = stats
+    try:   # presentation only: an archive failure must never fail the scan
+        rec = render.archive_scan(store, frame, bg, summary)
+        latest["thumb"] = render.scan_prefix("archive", frame.time) + "overlay.webp"
+        stats["archived_candidates"] = len(rec["candidates"])
+    except Exception as ex:
+        latest.setdefault("errors", []).append(f"archive: {type(ex).__name__}: {ex}")
     store.put_json("latest/summary.json", latest)
     out = {k: summary[k] for k in ("episode", "frame_time", "daytime", "background_scans",
                                    "candidates", "outcomes", "errors")}
@@ -221,15 +235,34 @@ def http(event, context=None):
     method = event.get("requestContext", {}).get("http", {}).get("method", "GET")
     path = event.get("rawPath", "/")
     try:
-        if method == "GET" and path == "/":
+        if method == "GET" and path in ("/", "/archive"):
+            return _resp(200, _site(), "text/html; charset=utf-8", {"cache-control": "max-age=300"})
+        if method == "GET" and path == "/review":
             return _resp(200, review_page(store), "text/html; charset=utf-8")
+        if method == "GET" and path == "/api/featured":
+            return _resp(200, store.get_json("events/featured.json") or {"featured": []},
+                         extra={"cache-control": "max-age=300"})
+        if method == "GET" and path == "/api/days":
+            return _resp(200, {"days": list_days(store)})
+        if method == "GET" and path == "/api/day":
+            day = (event.get("queryStringParameters") or {}).get("date", "")
+            if not _DATE.match(day):
+                return _resp(400, {"error": "date must be YYYY-MM-DD"})
+            idx = day_index(store, day)
+            return _resp(200, idx) if idx else _resp(404, {"error": "no stored scans for this day"})
+        if method == "GET" and path.startswith("/img/"):
+            key = path[len("/img/"):]
+            if not _IMG.match(key) or ".." in key:
+                return _resp(400, {"error": "bad key"})
+            return _resp(302, "", "text/plain", {"location": store.url(key, 7200),
+                                                  "cache-control": "max-age=3600"})
         if method == "GET" and path == "/api/latest":
             return _resp(200, store.get_json("latest/summary.json", {}))
         if method == "GET" and path.startswith("/api/trace/"):
             eid = path.rsplit("/", 1)[-1]
             if not _ID.match(eid):
                 return _resp(400, {"error": "bad id"})
-            t = store.get_json(f"traces/{eid}.json")
+            t = store.get_json(f"traces/{eid}.json") or store.get_json(f"events/traces/{eid}.json")
             return _resp(200, t) if t else _resp(404, {"error": "not found"})
         if method == "GET" and path == "/public/smoke.geojson":
             layer = store.get_json("public/smoke.geojson") or build_public_layer(store)
@@ -245,6 +278,32 @@ def http(event, context=None):
         return _resp(400, {"error": str(ex)})
     except LookupError as ex:
         return _resp(404, {"error": str(ex)})
+
+
+@functools.lru_cache(maxsize=1)
+def _site() -> str:
+    with open(_SITE, encoding="utf-8") as f:
+        return f.read()
+
+
+def list_days(store) -> list[str]:
+    days = set()
+    for root in ("archive", "events"):
+        for k in store.list(f"{root}/index/"):
+            d = k.rsplit("/", 1)[-1].removesuffix(".json")
+            if _DATE.match(d):
+                days.add(d)
+    return sorted(days)
+
+
+def day_index(store, day: str) -> dict | None:
+    """Live archive first (complete day); events/ holds featured and reviewed scans."""
+    live, ev = store.get_json(f"archive/index/{day}.json"), store.get_json(f"events/index/{day}.json")
+    if live and ev:   # a reviewed live scan is in both: keep the live entry
+        seen = {s["t"] for s in live["scans"]}
+        live["scans"] = sorted(live["scans"] + [s for s in ev["scans"] if s["t"] not in seen],
+                               key=lambda s: s["time"])
+    return live or ev
 
 
 def _pending(store, limit=30) -> list[dict]:

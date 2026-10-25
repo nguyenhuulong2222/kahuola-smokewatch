@@ -134,6 +134,43 @@ aws logs tail /aws/lambda/<ScanFunctionName> --since 30m
 curl -s <ReviewUrl>/api/latest | python -m json.tool | head -40
 ```
 
+## Public page, archive and featured events
+
+`GET /` opens with the Lahaina case study: timeline, an OpenCV-rendered animation, the agent
+trace, and the evaluation table. Below that are a timeline viewer and the live status. The
+reviewer page is at `/review`.
+
+* **Layers** (all on the same 0.02° grid, toggled in the browser):
+  * true color by day, a dark land/sea canvas by night;
+  * the **ΔT anomaly**: Δ(3.9 − 11.2 µm) above the 3-day background, which is what the
+    detector tests;
+  * coastline;
+  * FIRMS points.
+* **Live archive:** every scan writes `archive/YYYY/MM/DD/HHMMZ/` (`overlay.webp`,
+  `anomaly.png`, `summary.json`) and updates `archive/index/YYYY-MM-DD.json`. The index is
+  written to a temporary key, then copied into place. Days are **Hawaiʻi (HST) calendar days**,
+  so a fire evening stays on one day. `archive/` expires after 90 days. Scans with a review
+  are also copied to `events/`, which is kept.
+* **Featured event:** the 8 Aug 2023 Maui fires are backfilled from the evaluation cache, with
+  no NOAA download:
+
+  ```bash
+  FIRMS_ARCHIVE_DIR=.cache/firms python scripts/backfill_events.py --out out/site
+  aws s3 sync out/site/events s3://<bucket>/events/ && aws s3 sync out/site/static s3://<bucket>/static/
+  ```
+
+  This also renders `events/media/lahaina-2023-08-08.mp4` (cv2.VideoWriter, H.264) and a GIF
+  fallback (cv2.imwriteanimation).
+* **Deep links:** `?date=2023-08-08&t=0136Z` (HST day, UTC time of the scan; `&region=maui`,
+  `&play=1`).
+* **Images** are served through `GET /img/<key>`, which redirects to a presigned S3 URL
+  (cached 1 h). The bucket stays private.
+* **Limitation:** the viewer shows only days stored by the live scanner and featured events.
+  It does not fetch arbitrary past dates from NOAA on demand. The replay days show the
+  RulePolicy decisions of the evaluation run.
+* **Local preview:** `LOCAL_STORE=out/site python scripts/serve_local.py`, then open
+  http://127.0.0.1:8765/.
+
 ## Safety properties
 
 * The agent never publishes; only `POST /review` with the reviewer token does.

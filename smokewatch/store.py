@@ -40,7 +40,11 @@ class LocalStore:
         except FileNotFoundError:
             pass
 
-    def url(self, key):
+    def copy(self, src, dst):
+        import shutil
+        shutil.copyfile(os.path.join(self.root, src), self._p(dst))
+
+    def url(self, key, expires=3600):
         return "file://" + os.path.abspath(os.path.join(self.root, key))
 
     def put_json(self, key, obj):
@@ -71,6 +75,9 @@ class S3Store(LocalStore):
         for page in self.s3.get_paginator("list_objects_v2").paginate(Bucket=self.bucket, Prefix=prefix):
             out += [o["Key"] for o in page.get("Contents", [])]
         return sorted(out)
+
+    def copy(self, src, dst):
+        self.s3.copy_object(Bucket=self.bucket, Key=dst, CopySource={"Bucket": self.bucket, "Key": src})
 
     def exists(self, key) -> bool:
         try:
