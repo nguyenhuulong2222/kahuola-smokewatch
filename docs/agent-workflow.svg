@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" width="1000" height="700" font-family="Helvetica, Arial, sans-serif" font-size="13">
+  <title>Kahu Ola SmokeWatch — agent workflow</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#444"/>
+    </marker>
+    <style>
+      .p{fill:#fff;stroke:#555;stroke-width:1.4}
+      .t{fill:#eaf2fb;stroke:#2f6db5;stroke-width:1.5}
+      .q{fill:#fff8e6;stroke:#c08a12;stroke-width:1.5}
+      .rail{fill:#fdecec;stroke:#b83232;stroke-width:1.6}
+      .ok{fill:#eef7ee;stroke:#3b8a3b;stroke-width:1.6}
+      .h{font-weight:bold;font-size:14px;fill:#1c2430}
+      .s{fill:#4a5363;font-size:12px}
+      .e{stroke:#444;stroke-width:1.4;fill:none;marker-end:url(#a)}
+      .r{stroke:#b83232;stroke-width:1.4;fill:none;stroke-dasharray:5 4;marker-end:url(#a)}
+    </style>
+  </defs>
+  <rect width="1000" height="700" fill="#ffffff"/>
+  <text x="24" y="34" font-size="20" font-weight="bold" fill="#1c2430">Agent workflow — one GOES scan</text>
+  <text x="24" y="54" class="s">Blue = tools the agent calls · amber = agent decision · red = rails enforced in code (not in the prompt)</text>
+
+  <!-- perception -->
+  <rect x="24" y="80" width="250" height="84" rx="8" class="p"/>
+  <text x="36" y="104" class="h">Perception (OpenCV)</text>
+  <text x="36" y="124" class="s">ΔT vs median 3-day background,</text>
+  <text x="36" y="140" class="s">land mask, clusters → candidates</text>
+  <text x="36" y="156" class="s">0 candidates → no LLM call</text>
+
+  <rect x="24" y="200" width="250" height="60" rx="8" class="q"/>
+  <text x="36" y="224" class="h">Inside volcanic zone?</text>
+  <text x="36" y="244" class="s">Kīlauea / Mauna Loa mask</text>
+
+  <rect x="24" y="300" width="250" height="60" rx="8" class="ok"/>
+  <text x="36" y="324" class="h">dismiss</text>
+  <text x="36" y="344" class="s">rationale cites the zone</text>
+
+  <!-- track -->
+  <rect x="340" y="200" width="290" height="104" rx="8" class="t"/>
+  <text x="352" y="224" class="h">track_plume(det_id, minutes_back)</text>
+  <text x="352" y="244" class="s">fetch earlier 5-min scans (5–30 min)</text>
+  <text x="352" y="260" class="s">hotspot present in how many scans?</text>
+  <text x="352" y="276" class="s">day: attached smoke plume, bearing,</text>
+  <text x="352" y="292" class="s">DIS optical flow (IoU, coherence, speed)</text>
+
+  <rect x="340" y="340" width="290" height="60" rx="8" class="q"/>
+  <text x="352" y="364" class="h">Persistent (≥ 2 scans)?</text>
+  <text x="352" y="384" class="s">ambiguous → may track further back</text>
+
+  <rect x="24" y="420" width="250" height="60" rx="8" class="ok"/>
+  <text x="36" y="444" class="h">schedule_recheck</text>
+  <text x="36" y="464" class="s">re-examined on the next scan</text>
+
+  <rect x="340" y="436" width="290" height="70" rx="8" class="t"/>
+  <text x="352" y="460" class="h">query_firms(det_id)</text>
+  <text x="352" y="480" class="s">VIIRS / MODIS detections ≤ ~5 km,</text>
+  <text x="352" y="496" class="s">24 h BEFORE the scan only</text>
+
+  <rect x="340" y="540" width="290" height="60" rx="8" class="q"/>
+  <text x="352" y="564" class="h">Decide + rationale from evidence</text>
+  <text x="352" y="584" class="s">ΔT, scans, plume, FIRMS — no fixed text</text>
+
+  <rect x="340" y="626" width="290" height="56" rx="8" class="ok"/>
+  <text x="352" y="650" class="h">request_human_review</text>
+  <text x="352" y="668" class="s">overlay PNG + evidence → reviews/pending</text>
+
+  <!-- rails -->
+  <rect x="680" y="200" width="296" height="152" rx="8" class="rail"/>
+  <text x="692" y="224" class="h" fill="#8a1f1f">Code rails on request_human_review</text>
+  <text x="692" y="248" class="s">✗ refused unless track_plume ran</text>
+  <text x="692" y="268" class="s">✗ refused if hotspot in &lt; 2 scans</text>
+  <text x="692" y="288" class="s">✗ refused inside volcanic zone</text>
+  <text x="692" y="308" class="s">refusal returns as a tool error</text>
+  <text x="692" y="324" class="s">→ the agent must choose again</text>
+  <text x="692" y="344" class="s">LLM confidence is NOT a gate</text>
+
+  <rect x="680" y="400" width="296" height="104" rx="8" class="rail"/>
+  <text x="692" y="424" class="h" fill="#8a1f1f">Failure handling</text>
+  <text x="692" y="446" class="s">LLM / network error → RulePolicy</text>
+  <text x="692" y="462" class="s">resolves what is still open</text>
+  <text x="692" y="478" class="s">step budget exhausted → recheck</text>
+  <text x="692" y="494" class="s">every call logged (tokens, latency)</text>
+
+  <rect x="680" y="560" width="296" height="104" rx="8" class="ok"/>
+  <text x="692" y="584" class="h">Human reviewer (only publisher)</text>
+  <text x="692" y="606" class="s">POST /review approve → feature in</text>
+  <text x="692" y="622" class="s">public/smoke.geojson with disclaimer</text>
+  <text x="692" y="642" class="s">reject → archived, never public</text>
+
+  <!-- edges -->
+  <path class="e" d="M149,164 L149,198"/>
+  <path class="e" d="M149,260 L149,298"/>
+  <text x="156" y="284" class="s">yes</text>
+  <path class="e" d="M274,230 L338,240"/>
+  <text x="290" y="226" class="s">no</text>
+  <path class="e" d="M485,304 L485,338"/>
+  <path class="e" d="M340,380 C300,390 300,450 276,450"/>
+  <text x="282" y="406" class="s">no</text>
+  <path class="e" d="M630,370 C660,370 660,260 632,260"/>
+  <text x="640" y="320" class="s">unsure</text>
+  <path class="e" d="M485,400 L485,434"/>
+  <text x="492" y="424" class="s">yes</text>
+  <path class="e" d="M485,506 L485,538"/>
+  <path class="e" d="M485,600 L485,624"/>
+  <path class="r" d="M630,654 C660,654 660,300 678,290"/>
+  <path class="e" d="M630,664 L678,620"/>
+</svg>

@@ -41,7 +41,7 @@ def main(argv=None) -> dict:
     ap.add_argument("--sector", default="C", choices=["C", "F"])
     ap.add_argument("--out", default="./out")
     ap.add_argument("--cache", default="./.cache/goes")
-    ap.add_argument("--policy", default="rules", choices=["rules", "bedrock"])
+    ap.add_argument("--policy", default="rules", choices=["rules", "bedrock", "anthropic"])
     a = ap.parse_args(argv)
 
     when = parse_time(a.time)

@@ -63,6 +63,46 @@ plume attached, which way does it extend, does optical flow move it coherently t
 Rationales are generated from the gathered evidence (ΔT, scans with hotspot and their times,
 plume size/bearing/motion, FIRMS count and latest pass), never from fixed text.
 
+**Confidence is not a decision threshold.** With an LLM policy, the `confidence` passed to
+`request_human_review` (e.g. 0.45) is the model's own estimate. It is shown to the reviewer
+and nothing else. Reviews are blocked only by hard rails in code (`Episode.t_request_human_review`):
+`track_plume` must have run, the candidate must be a thermal anomaly outside the volcanic mask,
+and the hotspot must be present in ≥ 2 scans. A refused call returns to the model as a tool
+error, so it must choose again. The agent can never publish; only a human at `POST /review` can.
+
+## Agent vs rules
+
+Policies are interchangeable (`AgentPolicy` = `rules` | `anthropic` | `bedrock`) and share
+the same tools and rails. Bedrock was blocked for this account (Sonnet 5.5 tokens-per-minute
+quota applied at 0; increase requested), so the LLM runs used **Claude Sonnet 5.5 via the
+Anthropic Messages API**. The prompt was not changed to steer these results.
+
+**True fires** (Lahaina 01:21Z/01:36Z, Olinda 11:21Z; `eval/policy_compare_anthropic.json`):
+6/6 decisions identical to RulePolicy. For Lahaina at 01:21Z the agent re-checked the
+single-scan hotspot, then queued review at 01:36Z. Trace: `docs/agent-trace-example.md`.
+
+**Real false positives** (scans with the uncorroborated FPs of the rules eval: vog 12–13 Sep
+20:01Z, 23:01Z, 01:01Z; Kauaʻi 8 Aug 21:21Z; clear 6 Aug 23:01Z; cloudy 29 Jan 09:01Z;
+`eval/policy_compare_anthropic_fp.json`):
+
+* 18/18 candidates got the same action as RulePolicy. That includes the **9 uncorroborated
+  false positives** that rules sent to review: the LLM also sent all 9 to review. It did not
+  dismiss or re-check any of them.
+* It never asked for more history (`minutes_back` > 10), even on 1-px, +6–7 K hotspots. The
+  system prompt tells it to start with 10 min, and 2–3 persistent scans satisfied it.
+* It did lower its own confidence on them (0.25–0.55, vs 0.40–0.80 on the true fires). The
+  ranges overlap, so confidence cannot separate them. It is not used as a gate (see above).
+
+**Conclusion (honest):** with today's evidence — thermal persistence, FIRMS, and a smoke
+plume that is rarely resolved at 2 km — the LLM agent matches the rules. It does not reduce
+false positives. Its value here is an evidence-cited rationale for the reviewer and an
+agent loop that can take new tools. It is not better discrimination. Rejecting the vog-day
+heating needs a better perception signal (see the contextual test), not a different policy.
+
+Cost and latency (Sonnet 5.5, $2 / $10 per M input / output tokens): scans with candidates
+used 3 model calls, 6.2–10.0 k input and 0.3–1.2 k output tokens. That is **$0.016–0.032 per
+scan** and 5–12 s of LLM time. Scans with no candidate make no model call (most live scans).
+
 ## Evaluation — TODO (full table: eval/results.md)
 
 Headline (Lahaina afternoon fire, preliminary until the full eval run): **GOES review 41 min

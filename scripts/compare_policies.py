@@ -54,9 +54,9 @@ def main(argv=None):
                     "seconds": round(time.time() - t0, 1),
                     "outcomes": {k: {"action": v["action"], "confidence": v.get("confidence"),
                                      "rationale": v["rationale"]} for k, v in ((str(k), v) for k, v in s["outcomes"].items())},
-                    "tools": [f"{st['tool']}({st['args'].get('det_id')})" for st in s["trace"] if "tool" in st],
+                    "tools": [f"{st['tool']}({st['args'].get('det_id')}" + (f",{st['args']['minutes_back']}min" if 'minutes_back' in st['args'] else '') + ")" for st in s["trace"] if "tool" in st],
                     "fallback": [st for st in s["trace"] if "error" in st and "tool" not in st],
-                    "usage": getattr(pol, "usage", None)}
+                    "usage": getattr(pol, "usage", None), "trace": s["trace"]}
         cands = {str(d["det_id"]): d["hotspot"] for d in agent.Episode(
             frame, source, LocalStore(tempfile.mkdtemp()), [], bg).observation()["candidates"]}
         rows.append({"time": frame.time.isoformat(), "candidates": cands, **res})
