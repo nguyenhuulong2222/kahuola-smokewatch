@@ -53,10 +53,11 @@ def true_color(frame: Frame) -> np.ndarray:
     return cv2.cvtColor((rgb * 255).astype(np.uint8), cv2.COLOR_RGB2BGR)
 
 
-def ir_gray(frame: Frame) -> np.ndarray:
-    """Night background: inverted 11.2 µm (cold cloud tops white), BGR uint8."""
-    t = np.nan_to_num(frame.bands["C14"], nan=300.0)
-    g = np.clip((310.0 - t) / 90.0, 0, 1) ** 0.7
+def thermal_image(frame: Frame) -> np.ndarray:
+    """Night background: 3.9 µm (C07) brightness temperature, warm = bright, BGR uint8.
+    Cold cloud tops are dark, warm land/ocean grey, fires near white (circled in red)."""
+    t = np.nan_to_num(frame.bands["C07"], nan=250.0)
+    g = np.clip((t - 250.0) / 70.0, 0, 1) ** 0.8
     return cv2.cvtColor((g * 255).astype(np.uint8), cv2.COLOR_GRAY2BGR)
 
 
@@ -218,7 +219,7 @@ def track_motion(prev: Frame, curr: Frame, prev_mask: np.ndarray, curr_mask: np.
 
 def render_overlay(frame: Frame, mask: np.ndarray, dets: list[Detection],
                    fire: np.ndarray | None = None, scale: int = 3) -> np.ndarray:
-    img = true_color(frame) if is_daytime(frame) else ir_gray(frame)
+    img = true_color(frame) if is_daytime(frame) else thermal_image(frame)
     img = cv2.resize(img, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
     m = cv2.resize(mask, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_NEAREST)
     tint = img.copy()
@@ -236,7 +237,7 @@ def render_overlay(frame: Frame, mask: np.ndarray, dets: list[Detection],
         text = d.label() if hasattr(d, "label") else f"#{d.id} {d.mean_score:.2f}"
         cv2.putText(img, text, (x * scale, max(y * scale - 6, 14)),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
-    stamp = frame.time.strftime("GOES-18 %Y-%m-%d %H:%M UTC")
+    stamp = frame.time.strftime("GOES-18 %Y-%m-%d %H:%M UTC") + ("" if is_daytime(frame) else "  3.9um thermal (night)")
     cv2.putText(img, stamp, (8, img.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                 (255, 255, 255), 1, cv2.LINE_AA)
     return img

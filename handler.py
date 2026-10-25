@@ -25,6 +25,7 @@ import html
 import json
 import os
 import re
+import time
 
 from smokewatch import agent, fire, goes
 from smokewatch.store import default_store
@@ -43,29 +44,117 @@ def _parse_time(s: str) -> dt.datetime:
     return t if t.tzinfo else t.replace(tzinfo=dt.timezone.utc)
 
 
+SCAN_RESERVE_S = 120   # time kept back for detection, agent and writes (Bedrock can be slow)
+
+
+class FrameCache:
+    """Reprojected Hawaiʻi frames (~1.5 MB .npz): /tmp -> S3 bg/frames/ -> NOAA.
+
+    Every frame fetched from NOAA is copied to S3, so the next scan — even on a cold Lambda —
+    reuses it, and a day later today's scans are tomorrow's background. NOAA fetches stop at
+    `deadline`; whatever is missing is fetched by the following scans (partial bootstrap)."""
+
+    def __init__(self, store, cache_dir: str = CACHE):
+        self.store, self.dir = store, cache_dir
+        os.makedirs(cache_dir, exist_ok=True)
+
+    def _npz(self, key):
+        return os.path.join(self.dir, os.path.basename(key)[:-3] + ".npz")
+
+    @staticmethod
+    def _s3key(key):
+        return "bg/frames/" + os.path.basename(key)[:-3] + ".npz"
+
+    def warm(self, keys: list[str], deadline: float) -> dict:
+        from concurrent.futures import ThreadPoolExecutor
+        keys = list(dict.fromkeys(keys))
+        todo = [k for k in keys if not os.path.exists(self._npz(k))]
+
+        def pull(k):
+            b = self.store.get_bytes(self._s3key(k))
+            if not b:
+                return False
+            with open(self._npz(k) + ".part", "wb") as f:
+                f.write(b)
+            os.replace(self._npz(k) + ".part", self._npz(k))
+            return True
+
+        with ThreadPoolExecutor(8) as ex:
+            hits = list(ex.map(pull, todo))
+        misses = [k for k, h in zip(todo, hits) if not h]
+        fetched = []
+        for i in range(0, len(misses), 8):           # priority order is preserved
+            if time.monotonic() > deadline:
+                break
+            batch = misses[i:i + 8]
+            goes.prefetch(batch, self.dir)            # parallel S3 GETs (in-region)
+            for k in batch:
+                if time.monotonic() > deadline:
+                    break
+                goes.load_key(k, self.dir)            # decode window -> .npz
+                fetched.append(k)
+        for f in os.listdir(self.dir):                # raw files left by a cut-off batch
+            if f.endswith(".nc"):
+                os.remove(os.path.join(self.dir, f))
+        with ThreadPoolExecutor(8) as ex:
+            list(ex.map(lambda k: self.store.put_bytes(self._s3key(k), open(self._npz(k), "rb").read(),
+                                                       "application/octet-stream"), fetched))
+        return {"wanted": len(keys), "tmp": len(keys) - len(todo), "s3": sum(hits),
+                "noaa": len(fetched), "missing": len(misses) - len(fetched)}
+
+    def cached(self, t: dt.datetime) -> goes.Frame:
+        """Only frames already warmed; used for the background so it never blocks."""
+        key = goes.nearest_key(t)
+        if not os.path.exists(self._npz(key)):
+            raise FileNotFoundError(key)
+        return goes.load_key(key, self.dir)
+
+    def source(self, t: dt.datetime) -> goes.Frame:
+        """Any frame; fetches if needed (track_plume asks for the 2 earlier scans)."""
+        key = goes.nearest_key(t)
+        if not os.path.exists(self._npz(key)):
+            self.warm([key], float("inf"))
+        return goes.load_key(key, self.dir)
+
+
 def scan(event, context=None):
     event = event or {}
+    started = time.monotonic()
+    budget = (context.get_remaining_time_in_millis() / 1000) if context else 300.0
+    deadline = started + budget - SCAN_RESERVE_S
     when = _parse_time(event["time"]) if event.get("time") else dt.datetime.now(dt.timezone.utc)
+    store = default_store()
+    cache = FrameCache(store)
 
-    @functools.lru_cache(maxsize=32)
-    def source(t: dt.datetime) -> goes.Frame:
-        return goes.fetch_frame(t, "C", CACHE)
-
-    # download everything this scan needs in parallel, then decode one by one
     key = goes.nearest_key(when)
     t0 = goes.scan_start(key)
-    want = [key]
-    for t in [t0 - dt.timedelta(minutes=5), t0 - dt.timedelta(minutes=10)] + fire.reference_times(t0):
+    must = [key] + [goes.nearest_key(t0 - dt.timedelta(minutes=m)) for m in (5, 10)]
+    refs = []
+    for t in fire.reference_times(t0):
         try:
-            want.append(goes.nearest_key(t))
+            refs.append(goes.nearest_key(t))
         except FileNotFoundError:
             pass
-    goes.prefetch(want, CACHE)
+    stats = cache.warm(must, float("inf"))           # current + 2 earlier scans: required
+    rs = cache.warm(refs, deadline)                   # background: as many as time allows
+    stats = {k: stats[k] + rs[k] for k in stats}
+    stats["fetch_s"] = round(time.monotonic() - started, 1)
+
+    bg = None
+    try:
+        bg = fire.fetch_background(t0, cache.cached)
+    except ValueError:
+        pass                                          # Episode records "no background"
     frame = goes.load_key(key, CACHE)
-    store = default_store()
-    summary = agent.run_scan(frame, source, store)
+    summary = agent.run_scan(frame, functools.lru_cache(maxsize=16)(cache.source), store,
+                             background=bg, fetch_background=False)
+    latest = store.get_json("latest/summary.json", {})
+    latest["frame_cache"] = stats
+    store.put_json("latest/summary.json", latest)
     out = {k: summary[k] for k in ("episode", "frame_time", "daytime", "background_scans",
                                    "candidates", "outcomes", "errors")}
+    out["frame_cache"] = stats
+    out["seconds"] = round(time.monotonic() - started, 1)
     print(json.dumps(out, default=str))
     return out
 
@@ -168,6 +257,26 @@ def _pending(store, limit=30) -> list[dict]:
     return out
 
 
+HST = dt.timezone(dt.timedelta(hours=-10), "HST")
+
+
+def _when(iso: str | None) -> str:
+    """'2026-10-25 06:51 UTC · 20:51 HST (Oct 24)' — frame times in both zones."""
+    if not iso:
+        return ""
+    t = _parse_time(iso)
+    h = t.astimezone(HST)
+    return f"{t:%Y-%m-%d %H:%M} UTC · {h:%H:%M} HST ({h:%b %d})"
+
+
+def _overlay_html(store, key: str, alt: str) -> str:
+    if not store.exists(key):
+        return '<div class=noimg>No overlay yet</div>'
+    return (f'<img src="{html.escape(store.url(key))}" alt="{html.escape(alt)}" loading=lazy '
+            f'onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),'
+            f'{{className:\'noimg\',textContent:\'No overlay yet\'}}))">')
+
+
 def review_page(store) -> str:
     latest = store.get_json("latest/summary.json", {}) or {}
     pend = _pending(store)
@@ -181,8 +290,8 @@ def review_page(store) -> str:
                  f"hotspot in {tr.get('hotspot_scans')}/{tr.get('scans_checked')} scans",
                  f"FIRMS prior 24 h: {fi.get('count', '—')}"]
         return f"""<article class=card>
-<img src="{e(p['img'])}" alt="overlay for {e(p['review_id'])}" loading=lazy>
-<h3>{lat:.3f}°N {abs(lon):.3f}°W · {e(str(p.get('frame_time', ''))[:16])}Z</h3>
+{_overlay_html(store, f"reviews/img/{p['review_id']}.png", f"overlay for {p['review_id']}")}
+<h3>{lat:.3f}°N {abs(lon):.3f}°W</h3><p class=muted>{e(_when(p.get('frame_time')))}</p>
 <p class=conf>confidence {p.get('confidence')}</p>
 <ul>{''.join(f'<li>{e(x)}</li>' for x in facts)}</ul>
 <p class=why>{e(p.get('rationale', ''))}</p>
@@ -191,7 +300,23 @@ def review_page(store) -> str:
 <button data-id="{e(p['review_id'])}" data-d=reject class=rej>Reject</button></div></article>"""
 
     cards = "".join(card(p) for p in pend) or "<p class=muted>No candidates waiting for review.</p>"
-    lt = e(str(latest.get("frame_time", "—"))[:16])
+    if latest.get("frame_time"):
+        fc = latest.get("frame_cache") or {}
+        status = (f"{latest.get('candidates', 0)} candidate(s) · background from "
+                  f"{latest.get('background_scans', 0)} reference scans · "
+                  f"{'day' if latest.get('daytime') else 'night (3.9 µm thermal only)'}")
+        if fc:
+            status += (f" · frames: {fc.get('s3', 0)} from cache, {fc.get('noaa', 0)} from NOAA, "
+                       f"{fc.get('missing', 0)} still to fetch")
+        notes = "".join(f"<li>{e(x)}</li>" for x in latest.get("errors") or [])
+        latest_html = (f"<h2>Latest scan</h2><p><b>{e(_when(latest['frame_time']))}</b></p>"
+                       f"<p class=muted>{e(status)} · <a href=\"api/latest\">summary JSON</a></p>"
+                       + (f"<ul class=warn>{notes}</ul>" if notes else "")
+                       + _overlay_html(store, "latest/overlay.png", "latest GOES-18 overlay"))
+    else:
+        latest_html = ("<h2>Latest scan</h2><p class=muted>No scan has run yet. The scanner runs every "
+                       "10 minutes; the first one also bootstraps the 3-day thermal background.</p>"
+                       "<div class=noimg>No overlay yet</div>")
     return f"""<!doctype html><html lang=en><head><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1"><title>SmokeWatch review</title>
 <style>
@@ -205,16 +330,14 @@ main{{max-width:960px;margin:auto;padding:16px}}h1{{font-size:1.3rem;margin:.2re
 .card h3{{font-size:1rem;margin:.5rem 0 .1rem}}.why{{font-size:.88rem}}ul{{padding-left:1.1rem;margin:.3rem 0}}
 .btns{{display:flex;gap:8px}}button{{flex:1;padding:10px;border:0;border-radius:6px;background:var(--ok);color:#06130d;font-weight:600}}
 button.rej{{background:var(--bad);color:#fff}}input{{width:100%;padding:9px;box-sizing:border-box;margin:6px 0 14px}}
-a{{color:var(--acc)}}
+a{{color:var(--acc)}}.noimg{{display:grid;place-items:center;min-height:140px;border:1px dashed var(--mut);
+border-radius:6px;color:var(--mut)}}.warn{{color:var(--acc);font-size:.9rem}}
 </style></head><body><main>
 <h1>Kahu Ola SmokeWatch — human review</h1>
 <p class=banner>The agent can only <b>queue</b> candidates. Nothing reaches the public layer until a
 reviewer approves it here. Public layer: <a href="public/smoke.geojson">smoke.geojson</a>.<br>
 <small>{e(DISCLAIMER_VI)} · {e(DISCLAIMER_EN)}</small></p>
-<section class=latest><h2>Latest scan · {lt}Z</h2>
-<p class=muted>{latest.get('candidates', 0)} candidate(s), background from {latest.get('background_scans', 0)} scans,
-{'day' if latest.get('daytime') else 'night (thermal only)'} · <a href="api/latest">summary JSON</a></p>
-<img src="{e(store.url('latest/overlay.png'))}" alt="latest GOES-18 overlay" loading=lazy></section>
+<section class=latest>{latest_html}</section>
 <h2>Pending review ({len(pend)})</h2>
 <label>Reviewer token <input id=tok type=password autocomplete=off></label>
 <div class=grid>{cards}</div></main>

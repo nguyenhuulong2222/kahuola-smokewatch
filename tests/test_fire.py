@@ -100,3 +100,16 @@ def test_volcanic_candidate_cannot_be_reviewed(tmp_path):
     assert "volcanic" in r["error"]
     agent.RulePolicy().run(ep)
     assert ep.outcome[1]["action"] == "dismiss" and "Kīlauea" in ep.outcome[1]["rationale"]
+
+
+def test_reference_priority_same_time_first():
+    rt = fire.reference_times(T0)
+    assert len(rt) == 9
+    assert [T0 - r for r in rt[:3]] == [dt.timedelta(days=d) for d in (1, 2, 3)]
+
+
+def test_thin_background_skips_detection(tmp_path):
+    bg = fire.build_background(refs()[:2])
+    cur = scene(T0, fire_px=(110, 95))
+    ep = agent.Episode(cur, lambda t: cur, LocalStore(str(tmp_path)), [], bg)
+    assert ep.dets == [] and "bootstrapping" in ep.errors[0]

@@ -72,7 +72,7 @@ class Episode:
     """State + tool implementations for one scan. Every call is traced."""
 
     def __init__(self, frame: Frame, frame_source: FrameSource, store, prior_rechecks=None,
-                 background: fire.Background | None = None):
+                 background: fire.Background | None = None, fetch_background: bool = True):
         self.id = frame.time.strftime("%Y%m%dT%H%MZ") + "-" + uuid.uuid4().hex[:6]
         self.frame = frame
         self.src = frame_source
@@ -80,12 +80,17 @@ class Episode:
         self.trace: list[dict] = []
         self.errors: list[str] = []
         self.bg = background
-        if self.bg is None:
+        if self.bg is None and not fetch_background:
+            self.errors.append("background: no reference scans cached yet (bootstrapping)")
+        elif self.bg is None:
             try:
                 self.bg = fire.fetch_background(frame.time, frame_source)
             except Exception as ex:   # no background -> no anomaly test; scan still completes
                 self.errors.append(f"background: {type(ex).__name__}: {ex}")
-        if self.bg is not None:
+        if self.bg is not None and self.bg.n_refs < fire.FP["bg_min_refs"]:
+            self.errors.append(f"background bootstrapping: {self.bg.n_refs}/{len(fire.reference_times(frame.time))} "
+                               f"reference scans (< {fire.FP['bg_min_refs']}); detection skipped this scan")
+        if self.bg is not None and self.bg.n_refs >= fire.FP["bg_min_refs"]:
             self.dets, self.fire, self.mask = fire.detect_fires(frame, self.bg)
         else:
             self.dets, self.fire, self.mask = [], np.zeros(frame.shape, np.uint8), np.zeros(frame.shape, np.uint8)
@@ -380,9 +385,10 @@ def make_policy(name: str | None = None):
 
 
 def run_scan(frame: Frame, frame_source: FrameSource, store, policy=None,
-             background: fire.Background | None = None) -> dict:
+             background: fire.Background | None = None, fetch_background: bool = True) -> dict:
+    """fetch_background=False: use only `background` (live mode fetches it under a deadline)."""
     prior = [store.get_json(k) for k in store.list("rechecks/")[-50:]]
-    ep = Episode(frame, frame_source, store, [p for p in prior if p], background)
+    ep = Episode(frame, frame_source, store, [p for p in prior if p], background, fetch_background)
     policy = policy or make_policy()
     if ep.dets:   # thermal works day and night; smoke evidence is daytime-only
         try:

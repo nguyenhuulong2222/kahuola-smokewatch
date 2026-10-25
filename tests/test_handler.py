@@ -70,3 +70,32 @@ def test_empty_server_token_refuses_everything(store, monkeypatch):
     r = handler.http(req("POST", "/review", {"review_id": "20230809T0131Z-abc123-1",
                                              "decision": "approve", "token": ""}))
     assert r["statusCode"] == 403
+
+
+def test_page_before_first_scan(tmp_path, monkeypatch):
+    monkeypatch.delenv("BUCKET", raising=False)
+    monkeypatch.setenv("LOCAL_STORE", str(tmp_path))
+    body = handler.http(req("GET", "/"))["body"]
+    assert "No scan has run yet" in body and "No overlay yet" in body and "<img" not in body
+
+
+def test_page_shows_utc_and_hst(store):
+    body = handler.http(req("GET", "/"))["body"]
+    assert "2023-08-09 01:31 UTC · 15:31 HST (Aug 08)" in body
+    assert "No overlay yet" in body          # summary exists but no overlay.png
+
+
+def test_frame_cache_uses_s3_and_respects_deadline(tmp_path, monkeypatch):
+    import numpy as np
+    from smokewatch import goes
+    s = LocalStore(str(tmp_path / "store"))
+    cache = handler.FrameCache(s, str(tmp_path / "tmp"))
+    key = "ABI-L2-MCMIPC/2023/221/01/OR_ABI-L2-MCMIPC-M6_G18_s20232210131174_e2_c3.nc"
+    np.savez(tmp_path / "x.npz", a=np.zeros(1))
+    s.put_bytes(cache._s3key(key), (tmp_path / "x.npz").read_bytes())
+    called = []
+    monkeypatch.setattr(goes, "prefetch", lambda *a, **k: called.append(a))
+    other = key.replace("0131174", "0136174")
+    st = cache.warm([key, other], deadline=0.0)      # deadline already passed
+    assert st == {"wanted": 2, "tmp": 0, "s3": 1, "noaa": 0, "missing": 1}
+    assert called == []                              # no NOAA fetch after the deadline

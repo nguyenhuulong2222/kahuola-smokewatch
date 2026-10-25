@@ -32,6 +32,7 @@ from .goes import Frame
 FP = {
     "bg_days": (1, 2, 3),
     "bg_window_min": 5,
+    "bg_min_refs": 3,          # fewer reference scans: background too noisy, no detection
     "cloud_bt_abs": 273.0,     # C13 below this: cloud
     "cloud_bt_rel": 4.0,       # C13 this far below the warmest sample: cloud
     "d_dt_min": 6.0,           # Δ(C07−C14) vs background, K
@@ -118,9 +119,11 @@ class Background:
 
 
 def reference_times(t: dt.datetime, p=FP) -> list[dt.datetime]:
+    """Most useful first: same clock time on each previous day, then the ±5 min scans.
+    A partial bootstrap (live mode under a time budget) therefore gets 3 days first."""
     w = p["bg_window_min"]
-    return [t - dt.timedelta(days=d) + dt.timedelta(minutes=m)
-            for d in p["bg_days"] for m in range(-w, w + 1, 5)]
+    offsets = [0] + [m for k in range(5, w + 1, 5) for m in (-k, k)]
+    return [t - dt.timedelta(days=d) + dt.timedelta(minutes=m) for m in offsets for d in p["bg_days"]]
 
 
 def build_background(refs: list[Frame], p=FP) -> Background:
@@ -149,6 +152,8 @@ def fetch_background(t: dt.datetime, source: Callable[[dt.datetime], Frame], p=F
         if fr.key not in seen and abs((fr.time - rt).total_seconds()) < 240:
             seen.add(fr.key)
             refs.append(fr)
+    if not refs:
+        raise ValueError(f"no reference scans available for {t:%Y-%m-%d %H:%M}Z")
     return build_background(refs, p)
 
 

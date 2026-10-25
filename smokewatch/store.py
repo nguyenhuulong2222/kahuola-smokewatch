@@ -31,6 +31,9 @@ class LocalStore:
             return []
         return sorted(os.path.join(prefix, f) for f in os.listdir(base))
 
+    def exists(self, key) -> bool:
+        return os.path.exists(os.path.join(self.root, key))
+
     def delete(self, key):
         try:
             os.remove(os.path.join(self.root, key))
@@ -68,6 +71,13 @@ class S3Store(LocalStore):
         for page in self.s3.get_paginator("list_objects_v2").paginate(Bucket=self.bucket, Prefix=prefix):
             out += [o["Key"] for o in page.get("Contents", [])]
         return sorted(out)
+
+    def exists(self, key) -> bool:
+        try:
+            self.s3.head_object(Bucket=self.bucket, Key=key)
+            return True
+        except self.s3.exceptions.ClientError:
+            return False
 
     def delete(self, key):
         self.s3.delete_object(Bucket=self.bucket, Key=key)

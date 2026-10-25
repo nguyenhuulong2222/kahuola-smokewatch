@@ -71,6 +71,10 @@ Resources:
             Status: Enabled
             Prefix: rechecks/
             ExpirationInDays: 2
+          - Id: expire-background-frames   # 3-day background + margin
+            Status: Enabled
+            Prefix: bg/frames/
+            ExpirationInDays: 5
 
   ScanFunction:
     Type: AWS::Serverless::Function
