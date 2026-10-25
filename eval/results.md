@@ -119,3 +119,30 @@ First-review rationale (generated from evidence):
 - **FP — FIRMS-corroborated (26 pts), 3.0 km from a known origin** — pulehu 08-09 05:36Z at 20.793, -156.342 (+50.4 K): Hotspot at 20.793N 156.342W: 20 px, Δ(3.9−11.2 µm) +50.4 K vs same time on previous days; present in 3/3 scans over 10 min (05:26Z, 05:31Z, 05:36Z); night — smoke not observable; FIRMS: 71 VIIRS/MODIS detections in prior 24 h, nearest 3.4 km, latest 00:36Z
 - **FP — FIRMS-corroborated (27 pts), 3.1 km from a known origin** — pulehu 08-09 05:46Z at 20.792, -156.342 (+40.1 K): Hotspot at 20.792N 156.342W: 20 px, Δ(3.9−11.2 µm) +40.1 K vs same time on previous days; present in 3/3 scans over 10 min (05:36Z, 05:41Z, 05:46Z); night — smoke not observable; FIRMS: 71 VIIRS/MODIS detections in prior 24 h, nearest 3.5 km, latest 00:36Z
 - **FP — FIRMS-corroborated (26 pts), 3.0 km from a known origin** — pulehu 08-09 05:51Z at 20.793, -156.342 (+42.1 K): Hotspot at 20.793N 156.342W: 20 px, Δ(3.9−11.2 µm) +42.1 K vs same time on previous days; present in 3/3 scans over 10 min (05:41Z, 05:46Z, 05:51Z); night — smoke not observable; FIRMS: 71 VIIRS/MODIS detections in prior 24 h, nearest 3.4 km, latest 00:36Z
+
+<!-- contextual-comparison -->
+
+## Contextual test (MODIS C6 parameters) — on vs off
+
+Experiment, **off by default**. `fire.contextual_test` adapts the MODIS contextual fire test (Giglio et al. 2003, RSE 87:273–282; unchanged in Collection 6, Giglio, Schroeder & Justice 2016, RSE 178:31–41) to our background-differenced fields: window 3×3 → 21×21 until ≥ 25 % and ≥ 8 valid neighbours; fire = T4 > 360 K day / 320 K night, or (ΔT > mean + 3.5 δ and ΔT > mean + 6 K and T4 > mean + 3 δ and (T11 > mean + δ − 4 K or δ′4 > 5 K)), δ = mean absolute deviation. Published constants, not tuned on this eval. Off: `run_eval.py`; on: `run_eval.py --contextual` (results_ctx.md/json).
+
+| Fire | First GOES review — off | Δ vs report | Δ vs first polar | First GOES review — **on** | Δ vs report | Δ vs first polar |
+|---|---|---|---|---|---|---|
+| Olinda fire (Upcountry Maui) | 08-08 11:21Z | +59m | −23m | 08-08 11:51Z | +1h29m | +7m |
+| Lahaina morning fire (Lahainaluna Rd) | — | — | — | — | — | — |
+| Kula fire (Kualono Pl) | — | — | — | — | — | — |
+| Lahaina afternoon fire (rekindle, Kuʻialua St) | 08-09 01:36Z | +41m | −6h14m | 08-09 01:56Z | +1h01m | −5h54m |
+| Pūlehu–Kīhei fire | 08-09 05:41Z | +1h40m | −2h09m | 08-09 04:06Z | +5m | −3h44m |
+| North Kohala (Akoni Pule Hwy) fire, Hawaiʻi Island | 08-08 13:41Z | +41m | −7h16m | — | — | — |
+| Mauna Kea Resort / Kawaihae fires, Hawaiʻi Island | 08-09 01:31Z | +31m | −9h54m | 08-09 01:41Z | +41m | −9h44m |
+
+| | off | on |
+|---|---|---|
+| Reviews matching a known fire (TP) | 207 | 84 |
+| False reviews (FP) | 34 | 0 |
+| — of which FIRMS-corroborated (fire spread) | 22 | 0 |
+| — of which uncorroborated (real FP) | 12 | 0 |
+| Precision (strict) | 0.859 | 1.0 |
+| Negative-day frames with a false review | 6/19 | 0/19 |
+
+**Decision rule** (fixed before the run): enable only if it removes real FPs AND loses no fire AND delays no first review. Result: real FPs 12 → 0; fires lost: North Kohala (Akoni Pule Hwy) fire, Hawaiʻi Island; first review later: Olinda fire (Upcountry Maui), Lahaina afternoon fire (rekindle, Kuʻialua St), Mauna Kea Resort / Kawaihae fires, Hawaiʻi Island. → **kept OFF**.

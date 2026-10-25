@@ -1,0 +1,3652 @@
+{
+  "generated_utc": "2026-10-25T16:39:42.821149+00:00",
+  "policy": "rules",
+  "contextual": true,
+  "polar_sensors_note": "NOAA-20 included (FIRMS API, VIIRS_NOAA20_SP)",
+  "events": [
+    {
+      "id": "olinda",
+      "name": "Olinda fire (Upcountry Maui)",
+      "first_report": "2023-08-08 10:22:00+00:00",
+      "origin": [
+        20.8087,
+        -156.2829
+      ],
+      "radius_km": 4,
+      "time_source": "F1 p.31, F2, AAR p.10 (primary)",
+      "origin_source": "AAR p.10 + OSM geocode",
+      "scans": 23,
+      "first_anomaly": "2023-08-08 11:46:17+00:00",
+      "first_review": "2023-08-08 11:51:17+00:00",
+      "firms_first_by_sensor": {
+        "VIIRS_SNPP": "2023-08-08 11:44:00+00:00",
+        "MODIS_Aqua": "2023-08-08 12:23:00+00:00",
+        "VIIRS_NOAA20": "2023-08-08 12:33:00+00:00",
+        "MODIS_Terra": "2023-08-08 20:56:00+00:00"
+      },
+      "first_polar": "2023-08-08 11:44:00+00:00",
+      "first_polar_sensor": "VIIRS_SNPP",
+      "review_minus_report_min": 89,
+      "review_minus_first_polar_min": 7,
+      "gallery": [],
+      "review_rationale": "Hotspot at 20.810N 156.290W: 4 px, \u0394(3.9\u221211.2 \u00b5m) +32.4 K vs same time on previous days; present in 2/3 scans over 10 min (11:46Z, 11:51Z); night \u2014 smoke not observable; FIRMS: 6 VIIRS/MODIS detections in prior 24 h, nearest 0.0 km, latest 11:44Z; flagged on 1 earlier scan(s)"
+    },
+    {
+      "id": "lahaina_am",
+      "name": "Lahaina morning fire (Lahainaluna Rd)",
+      "first_report": "2023-08-08 16:34:00+00:00",
+      "origin": [
+        20.8847,
+        -156.663
+      ],
+      "radius_km": 4,
+      "time_source": "F2, F1, AAR (primary)",
+      "origin_source": "F2 \u00a73.7.7 (primary)",
+      "scans": 30,
+      "first_anomaly": null,
+      "first_review": null,
+      "firms_first_by_sensor": {
+        "MODIS_Terra": "2023-08-09 07:50:00+00:00",
+        "VIIRS_SNPP": "2023-08-09 11:25:00+00:00",
+        "VIIRS_NOAA20": "2023-08-09 12:15:00+00:00",
+        "MODIS_Aqua": "2023-08-09 13:05:00+00:00"
+      },
+      "first_polar": "2023-08-09 07:50:00+00:00",
+      "first_polar_sensor": "MODIS_Terra",
+      "review_minus_report_min": null,
+      "review_minus_first_polar_min": null,
+      "gallery": [
+        "failures_ctx/lahaina_am_0808T1746_missed.png"
+      ]
+    },
+    {
+      "id": "kula",
+      "name": "Kula fire (Kualono Pl)",
+      "first_report": "2023-08-08 21:27:00+00:00",
+      "origin": [
+        20.7724,
+        -156.3069
+      ],
+      "radius_km": 3,
+      "time_source": "F1, F2, AAR (primary)",
+      "origin_source": "F1/AAR address + OSM geocode",
+      "scans": 27,
+      "first_anomaly": null,
+      "first_review": null,
+      "firms_first_by_sensor": {
+        "VIIRS_NOAA20": "2023-08-08 23:45:00+00:00",
+        "VIIRS_SNPP": "2023-08-09 00:36:00+00:00",
+        "MODIS_Terra": "2023-08-09 07:50:00+00:00",
+        "MODIS_Aqua": "2023-08-09 13:05:00+00:00"
+      },
+      "first_polar": "2023-08-08 23:45:00+00:00",
+      "first_polar_sensor": "VIIRS_NOAA20",
+      "review_minus_report_min": null,
+      "review_minus_first_polar_min": null,
+      "gallery": [
+        "failures_ctx/kula_0808T2221_missed.png"
+      ]
+    },
+    {
+      "id": "lahaina_pm",
+      "name": "Lahaina afternoon fire (rekindle, Ku\u02bbialua St)",
+      "first_report": "2023-08-09 00:55:00+00:00",
+      "origin": [
+        20.8847,
+        -156.663
+      ],
+      "radius_km": 4,
+      "time_source": "F1, F2, AAR (primary). ATF news coverage cites ~14:25 HST; not verified",
+      "origin_source": "F2 (primary)",
+      "scans": 17,
+      "first_anomaly": "2023-08-09 01:51:17+00:00",
+      "first_review": "2023-08-09 01:56:17+00:00",
+      "firms_first_by_sensor": {
+        "MODIS_Terra": "2023-08-09 07:50:00+00:00",
+        "VIIRS_SNPP": "2023-08-09 11:25:00+00:00",
+        "VIIRS_NOAA20": "2023-08-09 12:15:00+00:00",
+        "MODIS_Aqua": "2023-08-09 13:05:00+00:00"
+      },
+      "first_polar": "2023-08-09 07:50:00+00:00",
+      "first_polar_sensor": "MODIS_Terra",
+      "review_minus_report_min": 61,
+      "review_minus_first_polar_min": -354,
+      "gallery": [],
+      "review_rationale": "Hotspot at 20.880N 156.670W: 2 px, \u0394(3.9\u221211.2 \u00b5m) +20.7 K vs same time on previous days; present in 2/3 scans over 10 min (01:51Z, 01:56Z); no smoke plume attached; FIRMS: no VIIRS/MODIS detection in prior 24 h (GOES ahead of polar passes); flagged on 1 earlier scan(s)"
+    },
+    {
+      "id": "pulehu",
+      "name": "P\u016blehu\u2013K\u012bhei fire",
+      "first_report": "2023-08-09 04:01:00+00:00",
+      "origin": [
+        20.8002,
+        -156.3701
+      ],
+      "radius_km": 3,
+      "time_source": "F1 p.32, AAR p.13 (primary)",
+      "origin_source": "F1/AAR address + OSM geocode",
+      "scans": 6,
+      "first_anomaly": "2023-08-09 04:06:17+00:00",
+      "first_review": "2023-08-09 04:06:17+00:00",
+      "firms_first_by_sensor": {
+        "MODIS_Terra": "2023-08-09 07:50:00+00:00",
+        "VIIRS_SNPP": "2023-08-09 11:25:00+00:00",
+        "VIIRS_NOAA20": "2023-08-09 12:15:00+00:00",
+        "MODIS_Aqua": "2023-08-09 13:05:00+00:00"
+      },
+      "first_polar": "2023-08-09 07:50:00+00:00",
+      "first_polar_sensor": "MODIS_Terra",
+      "review_minus_report_min": 5,
+      "review_minus_first_polar_min": -224,
+      "gallery": [],
+      "review_rationale": "Hotspot at 20.790N 156.350W: 2 px, \u0394(3.9\u221211.2 \u00b5m) +28.0 K vs same time on previous days; present in 2/3 scans over 10 min (04:01Z, 04:06Z); no smoke plume attached; FIRMS: 71 VIIRS/MODIS detections in prior 24 h, nearest 4.3 km, latest 00:36Z; flagged on 1 earlier scan(s)"
+    },
+    {
+      "id": "kohala_ranch",
+      "name": "North Kohala (Akoni Pule Hwy) fire, Hawai\u02bbi Island",
+      "first_report": "2023-08-08 13:00:00+00:00",
+      "origin": [
+        20.0902,
+        -155.8312
+      ],
+      "radius_km": 6,
+      "time_source": "bigislandnow.com 2023-08-08; bigislandvideonews.com 2023-08-08 (secondary, approximate)",
+      "origin_source": "news + OSM geocode (secondary)",
+      "scans": 36,
+      "first_anomaly": "2023-08-08 14:21:17+00:00",
+      "first_review": null,
+      "firms_first_by_sensor": {
+        "MODIS_Terra": "2023-08-08 20:57:00+00:00",
+        "VIIRS_SNPP": "2023-08-08 22:55:00+00:00",
+        "VIIRS_NOAA20": "2023-08-08 23:45:00+00:00"
+      },
+      "first_polar": "2023-08-08 20:57:00+00:00",
+      "first_polar_sensor": "MODIS_Terra",
+      "review_minus_report_min": null,
+      "review_minus_first_polar_min": null,
+      "gallery": [
+        "failures_ctx/kohala_ranch_0808T1401_missed.png"
+      ]
+    },
+    {
+      "id": "mauna_kea_resort",
+      "name": "Mauna Kea Resort / Kawaihae fires, Hawai\u02bbi Island",
+      "first_report": "2023-08-09 01:00:00+00:00",
+      "origin": [
+        20.0069,
+        -155.8262
+      ],
+      "radius_km": 6,
+      "time_source": "bigislandnow.com 2023-08-08 (secondary, approximate)",
+      "origin_source": "news + OSM geocode (secondary)",
+      "scans": 14,
+      "first_anomaly": "2023-08-09 01:36:17+00:00",
+      "first_review": "2023-08-09 01:41:17+00:00",
+      "firms_first_by_sensor": {
+        "VIIRS_SNPP": "2023-08-09 11:25:00+00:00",
+        "VIIRS_NOAA20": "2023-08-09 12:15:00+00:00"
+      },
+      "first_polar": "2023-08-09 11:25:00+00:00",
+      "first_polar_sensor": "VIIRS_SNPP",
+      "review_minus_report_min": 41,
+      "review_minus_first_polar_min": -584,
+      "gallery": [],
+      "review_rationale": "Hotspot at 20.013N 155.827W: 3 px, \u0394(3.9\u221211.2 \u00b5m) +23.5 K vs same time on previous days; present in 2/3 scans over 10 min (01:36Z, 01:41Z); no smoke plume attached; FIRMS: 1 VIIRS/MODIS detections in prior 24 h, nearest 7.1 km, latest 20:57Z; flagged on 1 earlier scan(s)"
+    }
+  ],
+  "negatives": [
+    {
+      "id": "clear_0806",
+      "kind": "clear",
+      "label_source": "No Maui/Hawai\u02bbi Island fires reported 5\u20136 Aug 2023 in AAR/F1/news (absence of evidence); FIRMS archive: only K\u012blauea/Mauna Loa volcanic detections on these dates.",
+      "frames": 4,
+      "firms_nonvolcanic_points": 1
+    },
+    {
+      "id": "vog_0110",
+      "kind": "vog",
+      "label_source": "K\u012blauea summit eruption 5 Jan\u20137 Mar 2023 (USGS HVO); vog over Honolulu 10 Jan 2023 (Hawaii News Now, secondary). Also exercises the volcanic exclusion mask.",
+      "frames": 4,
+      "firms_nonvolcanic_points": 34
+    },
+    {
+      "id": "vog_0912",
+      "kind": "vog",
+      "label_source": "K\u012blauea summit eruption 10\u201316 Sep 2023 (USGS HVO); DOH release 11 Sep 2023 vog on west Hawai\u02bbi Island; P\u0101hala unhealthy for sensitive groups 12 Sep (HPR).",
+      "frames": 4,
+      "firms_nonvolcanic_points": 5
+    },
+    {
+      "id": "glint_0615",
+      "kind": "glint",
+      "label_source": "Near-solstice afternoon: GOES-18 specular point nearest Hawai\u02bbi ~13:00\u201315:00 HST. K\u012blauea summit erupting 7\u201319 Jun 2023 (USGS HVO).",
+      "frames": 3,
+      "firms_nonvolcanic_points": 25
+    },
+    {
+      "id": "cloudy_0128",
+      "kind": "cloudy",
+      "label_source": "Measured: 84% of land pixels C13 < 273 K at 2023-01-28 23:01Z (eval/logs/cloudy.log); winter, no wildfire reports found; K\u012blauea summit erupting (USGS HVO).",
+      "frames": 4,
+      "firms_nonvolcanic_points": 0
+    }
+  ],
+  "frames": [
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/10/OR_ABI-L2-MCMIPC-M6_G18_s20232201011173_e20232201013558_c20232201014058.nc",
+      "time": "2023-08-08 10:11:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1011Z-69d892",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.94,
+        "agent": 0.03
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/10/OR_ABI-L2-MCMIPC-M6_G18_s20232201016173_e20232201018557_c20232201019044.nc",
+      "time": "2023-08-08 10:16:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1016Z-4d000f",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/10/OR_ABI-L2-MCMIPC-M6_G18_s20232201021173_e20232201023546_c20232201024056.nc",
+      "time": "2023-08-08 10:21:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1021Z-8ae599",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/10/OR_ABI-L2-MCMIPC-M6_G18_s20232201026173_e20232201028551_c20232201029052.nc",
+      "time": "2023-08-08 10:26:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1026Z-1f13ff",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.07,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/10/OR_ABI-L2-MCMIPC-M6_G18_s20232201031173_e20232201033557_c20232201034050.nc",
+      "time": "2023-08-08 10:31:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1031Z-d19a1a",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.07,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/10/OR_ABI-L2-MCMIPC-M6_G18_s20232201036173_e20232201038558_c20232201039055.nc",
+      "time": "2023-08-08 10:36:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1036Z-218067",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/10/OR_ABI-L2-MCMIPC-M6_G18_s20232201041173_e20232201043551_c20232201044051.nc",
+      "time": "2023-08-08 10:41:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1041Z-eb3267",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.07,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/10/OR_ABI-L2-MCMIPC-M6_G18_s20232201046173_e20232201048557_c20232201049052.nc",
+      "time": "2023-08-08 10:46:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1046Z-ece4b9",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/10/OR_ABI-L2-MCMIPC-M6_G18_s20232201051173_e20232201053546_c20232201054051.nc",
+      "time": "2023-08-08 10:51:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1051Z-652110",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/10/OR_ABI-L2-MCMIPC-M6_G18_s20232201056173_e20232201058558_c20232201059050.nc",
+      "time": "2023-08-08 10:56:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1056Z-465f3b",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.54,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/11/OR_ABI-L2-MCMIPC-M6_G18_s20232201101173_e20232201103557_c20232201104055.nc",
+      "time": "2023-08-08 11:01:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1101Z-27b954",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/11/OR_ABI-L2-MCMIPC-M6_G18_s20232201106173_e20232201108546_c20232201109044.nc",
+      "time": "2023-08-08 11:06:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1106Z-a66e0c",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/11/OR_ABI-L2-MCMIPC-M6_G18_s20232201111173_e20232201113546_c20232201114049.nc",
+      "time": "2023-08-08 11:11:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1111Z-9cc6b2",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/11/OR_ABI-L2-MCMIPC-M6_G18_s20232201116173_e20232201118558_c20232201119056.nc",
+      "time": "2023-08-08 11:16:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1116Z-846521",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/11/OR_ABI-L2-MCMIPC-M6_G18_s20232201121173_e20232201123552_c20232201124054.nc",
+      "time": "2023-08-08 11:21:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1121Z-076979",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.07,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/11/OR_ABI-L2-MCMIPC-M6_G18_s20232201126173_e20232201128558_c20232201129062.nc",
+      "time": "2023-08-08 11:26:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1126Z-ba39fa",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/11/OR_ABI-L2-MCMIPC-M6_G18_s20232201131173_e20232201133551_c20232201134063.nc",
+      "time": "2023-08-08 11:31:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1131Z-8b6a01",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/11/OR_ABI-L2-MCMIPC-M6_G18_s20232201136173_e20232201138558_c20232201139047.nc",
+      "time": "2023-08-08 11:36:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1136Z-95457b",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 60.19,
+        "background": 90.87,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/11/OR_ABI-L2-MCMIPC-M6_G18_s20232201141173_e20232201143551_c20232201144057.nc",
+      "time": "2023-08-08 11:41:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1141Z-d3761c",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 13.81,
+        "background": 43.35,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/11/OR_ABI-L2-MCMIPC-M6_G18_s20232201146173_e20232201148558_c20232201149048.nc",
+      "time": "2023-08-08 11:46:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1146Z-132d73",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 47.42,
+        "background": 88.58,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 13,
+        "schedule_recheck": 0
+      },
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/11/OR_ABI-L2-MCMIPC-M6_G18_s20232201151173_e20232201153558_c20232201154047.nc",
+      "time": "2023-08-08 11:51:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1151Z-60d209",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 12.98,
+        "background": 127.73,
+        "agent": 0.58
+      },
+      "tool_ms": {
+        "track_plume": 7,
+        "query_firms": 550,
+        "request_human_review": 12
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/11/OR_ABI-L2-MCMIPC-M6_G18_s20232201156173_e20232201158557_c20232201159053.nc",
+      "time": "2023-08-08 11:56:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1156Z-e4a38f",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 15.13,
+        "background": 41.87,
+        "agent": 0.04
+      },
+      "tool_ms": {
+        "track_plume": 8,
+        "query_firms": 3,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "olinda",
+      "key": "ABI-L2-MCMIPC/2023/220/12/OR_ABI-L2-MCMIPC-M6_G18_s20232201201173_e20232201203546_c20232201204056.nc",
+      "time": "2023-08-08 12:01:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1201Z-d3d905",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 5.74,
+        "background": 19.66,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/16/OR_ABI-L2-MCMIPC-M6_G18_s20232201626173_e20232201628558_c20232201629051.nc",
+      "time": "2023-08-08 16:26:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1626Z-3d7c6f",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.02,
+        "background": 1.02,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/16/OR_ABI-L2-MCMIPC-M6_G18_s20232201631173_e20232201633558_c20232201634063.nc",
+      "time": "2023-08-08 16:31:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1631Z-d5e53d",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.07,
+        "agent": 0.21
+      },
+      "tool_ms": {
+        "track_plume": 161,
+        "query_firms": 0,
+        "request_human_review": 14
+      },
+      "negative": false,
+      "reviews": 2,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/16/OR_ABI-L2-MCMIPC-M6_G18_s20232201636173_e20232201638546_c20232201639059.nc",
+      "time": "2023-08-08 16:36:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1636Z-2874a6",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.07,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/16/OR_ABI-L2-MCMIPC-M6_G18_s20232201641173_e20232201643559_c20232201644068.nc",
+      "time": "2023-08-08 16:41:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1641Z-18a580",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/16/OR_ABI-L2-MCMIPC-M6_G18_s20232201646173_e20232201648552_c20232201649114.nc",
+      "time": "2023-08-08 16:46:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1646Z-9d6ea2",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.07,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/16/OR_ABI-L2-MCMIPC-M6_G18_s20232201651173_e20232201653546_c20232201654070.nc",
+      "time": "2023-08-08 16:51:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1651Z-ec8c0b",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.07,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/17/OR_ABI-L2-MCMIPC-M6_G18_s20232201701173_e20232201703553_c20232201704052.nc",
+      "time": "2023-08-08 17:01:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1701Z-7e1ec5",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.56,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/17/OR_ABI-L2-MCMIPC-M6_G18_s20232201706173_e20232201708552_c20232201709058.nc",
+      "time": "2023-08-08 17:06:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1706Z-2eb74a",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/17/OR_ABI-L2-MCMIPC-M6_G18_s20232201711173_e20232201713552_c20232201714067.nc",
+      "time": "2023-08-08 17:11:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1711Z-c82732",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/17/OR_ABI-L2-MCMIPC-M6_G18_s20232201716173_e20232201718559_c20232201719059.nc",
+      "time": "2023-08-08 17:16:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1716Z-dabbb3",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.07,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/17/OR_ABI-L2-MCMIPC-M6_G18_s20232201721173_e20232201723558_c20232201724070.nc",
+      "time": "2023-08-08 17:21:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1721Z-b81903",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.07,
+        "agent": 0.02
+      },
+      "tool_ms": {
+        "track_plume": 9,
+        "schedule_recheck": 0
+      },
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/17/OR_ABI-L2-MCMIPC-M6_G18_s20232201726173_e20232201728558_c20232201729060.nc",
+      "time": "2023-08-08 17:26:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1726Z-705e13",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.07,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 11
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/17/OR_ABI-L2-MCMIPC-M6_G18_s20232201731173_e20232201733558_c20232201734064.nc",
+      "time": "2023-08-08 17:31:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1731Z-f72d8d",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.07,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/17/OR_ABI-L2-MCMIPC-M6_G18_s20232201736173_e20232201738558_c20232201739050.nc",
+      "time": "2023-08-08 17:36:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1736Z-ecd7e5",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.07,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/17/OR_ABI-L2-MCMIPC-M6_G18_s20232201741173_e20232201743552_c20232201744057.nc",
+      "time": "2023-08-08 17:41:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1741Z-48489b",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.07,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/17/OR_ABI-L2-MCMIPC-M6_G18_s20232201746173_e20232201748546_c20232201749052.nc",
+      "time": "2023-08-08 17:46:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1746Z-573962",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.07,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/17/OR_ABI-L2-MCMIPC-M6_G18_s20232201751173_e20232201753546_c20232201754065.nc",
+      "time": "2023-08-08 17:51:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1751Z-5febdc",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.07,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/17/OR_ABI-L2-MCMIPC-M6_G18_s20232201756173_e20232201758558_c20232201759066.nc",
+      "time": "2023-08-08 17:56:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1756Z-fc762e",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.53,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/18/OR_ABI-L2-MCMIPC-M6_G18_s20232201801173_e20232201803546_c20232201804063.nc",
+      "time": "2023-08-08 18:01:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1801Z-6a4ac9",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.07,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/18/OR_ABI-L2-MCMIPC-M6_G18_s20232201806173_e20232201808546_c20232201809062.nc",
+      "time": "2023-08-08 18:06:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1806Z-e62cdd",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.07,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/18/OR_ABI-L2-MCMIPC-M6_G18_s20232201811173_e20232201813558_c20232201814063.nc",
+      "time": "2023-08-08 18:11:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1811Z-2e4525",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.07,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/18/OR_ABI-L2-MCMIPC-M6_G18_s20232201816173_e20232201818546_c20232201819047.nc",
+      "time": "2023-08-08 18:16:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1816Z-0a85c9",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.07,
+        "agent": 0.02
+      },
+      "tool_ms": {
+        "track_plume": 9,
+        "schedule_recheck": 0
+      },
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/18/OR_ABI-L2-MCMIPC-M6_G18_s20232201821173_e20232201823558_c20232201824064.nc",
+      "time": "2023-08-08 18:21:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1821Z-0e8cbd",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.07,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 11
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/18/OR_ABI-L2-MCMIPC-M6_G18_s20232201826173_e20232201828552_c20232201829055.nc",
+      "time": "2023-08-08 18:26:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1826Z-f69526",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 11
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/18/OR_ABI-L2-MCMIPC-M6_G18_s20232201831173_e20232201833552_c20232201834067.nc",
+      "time": "2023-08-08 18:31:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1831Z-29097c",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.09,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/18/OR_ABI-L2-MCMIPC-M6_G18_s20232201836173_e20232201838546_c20232201839056.nc",
+      "time": "2023-08-08 18:36:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1836Z-8626bb",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.07,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/18/OR_ABI-L2-MCMIPC-M6_G18_s20232201841173_e20232201843552_c20232201844064.nc",
+      "time": "2023-08-08 18:41:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1841Z-08e212",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.07,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 9,
+        "schedule_recheck": 0
+      },
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/18/OR_ABI-L2-MCMIPC-M6_G18_s20232201846173_e20232201848546_c20232201849058.nc",
+      "time": "2023-08-08 18:46:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1846Z-5f3da7",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.07,
+        "agent": 0.04
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 12
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/18/OR_ABI-L2-MCMIPC-M6_G18_s20232201851173_e20232201853552_c20232201854064.nc",
+      "time": "2023-08-08 18:51:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1851Z-782e73",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.07,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_am",
+      "key": "ABI-L2-MCMIPC/2023/220/18/OR_ABI-L2-MCMIPC-M6_G18_s20232201856173_e20232201858546_c20232201859052.nc",
+      "time": "2023-08-08 18:56:17+00:00",
+      "daytime": true,
+      "episode": "20230808T1856Z-953608",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.53,
+        "agent": 0.04
+      },
+      "tool_ms": {
+        "track_plume": 9,
+        "query_firms": 0,
+        "request_human_review": 12
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/21/OR_ABI-L2-MCMIPC-M6_G18_s20232202116173_e20232202118558_c20232202119044.nc",
+      "time": "2023-08-08 21:16:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2116Z-ef373d",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.97,
+        "agent": 0.2
+      },
+      "tool_ms": {
+        "track_plume": 161,
+        "query_firms": 0,
+        "request_human_review": 16
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/21/OR_ABI-L2-MCMIPC-M6_G18_s20232202121173_e20232202123546_c20232202124049.nc",
+      "time": "2023-08-08 21:21:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2121Z-b74da1",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 12
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/21/OR_ABI-L2-MCMIPC-M6_G18_s20232202126173_e20232202128558_c20232202129052.nc",
+      "time": "2023-08-08 21:26:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2126Z-cda986",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/21/OR_ABI-L2-MCMIPC-M6_G18_s20232202131173_e20232202133559_c20232202134048.nc",
+      "time": "2023-08-08 21:31:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2131Z-86ec03",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.04
+      },
+      "tool_ms": {
+        "track_plume": 9,
+        "query_firms": 0,
+        "request_human_review": 12
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/21/OR_ABI-L2-MCMIPC-M6_G18_s20232202136173_e20232202138552_c20232202139047.nc",
+      "time": "2023-08-08 21:36:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2136Z-7bf6b0",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.07,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 11
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/21/OR_ABI-L2-MCMIPC-M6_G18_s20232202141173_e20232202143559_c20232202144070.nc",
+      "time": "2023-08-08 21:41:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2141Z-534383",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.07,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/21/OR_ABI-L2-MCMIPC-M6_G18_s20232202146173_e20232202148558_c20232202149054.nc",
+      "time": "2023-08-08 21:46:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2146Z-fed131",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/21/OR_ABI-L2-MCMIPC-M6_G18_s20232202151173_e20232202153546_c20232202154051.nc",
+      "time": "2023-08-08 21:51:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2151Z-cbfaf6",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.02
+      },
+      "tool_ms": {
+        "track_plume": 8,
+        "schedule_recheck": 0
+      },
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/21/OR_ABI-L2-MCMIPC-M6_G18_s20232202156173_e20232202158546_c20232202159055.nc",
+      "time": "2023-08-08 21:56:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2156Z-d149d7",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.53,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 12
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/22/OR_ABI-L2-MCMIPC-M6_G18_s20232202201173_e20232202203546_c20232202204048.nc",
+      "time": "2023-08-08 22:01:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2201Z-6a6fc7",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 11
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/22/OR_ABI-L2-MCMIPC-M6_G18_s20232202206173_e20232202208560_c20232202209048.nc",
+      "time": "2023-08-08 22:06:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2206Z-01d42a",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/22/OR_ABI-L2-MCMIPC-M6_G18_s20232202211173_e20232202213552_c20232202214070.nc",
+      "time": "2023-08-08 22:11:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2211Z-df8e21",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.04
+      },
+      "tool_ms": {
+        "track_plume": 8,
+        "query_firms": 0,
+        "request_human_review": 11
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/22/OR_ABI-L2-MCMIPC-M6_G18_s20232202216173_e20232202218552_c20232202219066.nc",
+      "time": "2023-08-08 22:16:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2216Z-3b3fd9",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.07,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 12
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/22/OR_ABI-L2-MCMIPC-M6_G18_s20232202221173_e20232202223552_c20232202224052.nc",
+      "time": "2023-08-08 22:21:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2221Z-f061e0",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.07,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 11
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/22/OR_ABI-L2-MCMIPC-M6_G18_s20232202226173_e20232202228546_c20232202229045.nc",
+      "time": "2023-08-08 22:26:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2226Z-8595d4",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/22/OR_ABI-L2-MCMIPC-M6_G18_s20232202231173_e20232202233546_c20232202234054.nc",
+      "time": "2023-08-08 22:31:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2231Z-b1c0d2",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/22/OR_ABI-L2-MCMIPC-M6_G18_s20232202236173_e20232202238558_c20232202239063.nc",
+      "time": "2023-08-08 22:36:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2236Z-844c90",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.07,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/22/OR_ABI-L2-MCMIPC-M6_G18_s20232202241173_e20232202243546_c20232202244071.nc",
+      "time": "2023-08-08 22:41:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2241Z-1214a0",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.07,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/22/OR_ABI-L2-MCMIPC-M6_G18_s20232202246173_e20232202248552_c20232202249060.nc",
+      "time": "2023-08-08 22:46:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2246Z-619a37",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/22/OR_ABI-L2-MCMIPC-M6_G18_s20232202251173_e20232202253558_c20232202254049.nc",
+      "time": "2023-08-08 22:51:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2251Z-498a34",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/22/OR_ABI-L2-MCMIPC-M6_G18_s20232202256173_e20232202258547_c20232202259055.nc",
+      "time": "2023-08-08 22:56:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2256Z-08d284",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.52,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/23/OR_ABI-L2-MCMIPC-M6_G18_s20232202301173_e20232202303558_c20232202304055.nc",
+      "time": "2023-08-08 23:01:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2301Z-7d1eef",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/23/OR_ABI-L2-MCMIPC-M6_G18_s20232202306173_e20232202308546_c20232202309049.nc",
+      "time": "2023-08-08 23:06:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2306Z-9fbf58",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.07,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/23/OR_ABI-L2-MCMIPC-M6_G18_s20232202311173_e20232202313558_c20232202314069.nc",
+      "time": "2023-08-08 23:11:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2311Z-22883d",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/23/OR_ABI-L2-MCMIPC-M6_G18_s20232202316173_e20232202318546_c20232202319047.nc",
+      "time": "2023-08-08 23:16:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2316Z-a5e158",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/23/OR_ABI-L2-MCMIPC-M6_G18_s20232202321173_e20232202323546_c20232202324044.nc",
+      "time": "2023-08-08 23:21:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2321Z-3d92b4",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kula",
+      "key": "ABI-L2-MCMIPC/2023/220/23/OR_ABI-L2-MCMIPC-M6_G18_s20232202326174_e20232202328558_c20232202329047.nc",
+      "time": "2023-08-08 23:26:17+00:00",
+      "daytime": true,
+      "episode": "20230808T2326Z-6889ae",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.07,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_pm",
+      "key": "ABI-L2-MCMIPC/2023/221/00/OR_ABI-L2-MCMIPC-M6_G18_s20232210046174_e20232210048559_c20232210049046.nc",
+      "time": "2023-08-09 00:46:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0046Z-09e0d6",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.55,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 11,
+        "schedule_recheck": 0
+      },
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_pm",
+      "key": "ABI-L2-MCMIPC/2023/221/00/OR_ABI-L2-MCMIPC-M6_G18_s20232210051174_e20232210053547_c20232210054058.nc",
+      "time": "2023-08-09 00:51:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0051Z-7d9d59",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.02
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "schedule_recheck": 0
+      },
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_pm",
+      "key": "ABI-L2-MCMIPC/2023/221/00/OR_ABI-L2-MCMIPC-M6_G18_s20232210056174_e20232210058559_c20232210059044.nc",
+      "time": "2023-08-09 00:56:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0056Z-b8f2d1",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.56,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_pm",
+      "key": "ABI-L2-MCMIPC/2023/221/01/OR_ABI-L2-MCMIPC-M6_G18_s20232210101174_e20232210103547_c20232210104053.nc",
+      "time": "2023-08-09 01:01:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0101Z-5fd714",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.02
+      },
+      "tool_ms": {
+        "track_plume": 8,
+        "schedule_recheck": 0
+      },
+      "negative": false,
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_pm",
+      "key": "ABI-L2-MCMIPC/2023/221/01/OR_ABI-L2-MCMIPC-M6_G18_s20232210106174_e20232210108547_c20232210109061.nc",
+      "time": "2023-08-09 01:06:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0106Z-66b22f",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 9
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_pm",
+      "key": "ABI-L2-MCMIPC/2023/221/01/OR_ABI-L2-MCMIPC-M6_G18_s20232210111174_e20232210113552_c20232210114051.nc",
+      "time": "2023-08-09 01:11:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0111Z-5716a2",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_pm",
+      "key": "ABI-L2-MCMIPC/2023/221/01/OR_ABI-L2-MCMIPC-M6_G18_s20232210116174_e20232210118547_c20232210119041.nc",
+      "time": "2023-08-09 01:16:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0116Z-2839ea",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 8
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_pm",
+      "key": "ABI-L2-MCMIPC/2023/221/01/OR_ABI-L2-MCMIPC-M6_G18_s20232210121174_e20232210123547_c20232210124049.nc",
+      "time": "2023-08-09 01:21:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0121Z-154d3e",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_pm",
+      "key": "ABI-L2-MCMIPC/2023/221/01/OR_ABI-L2-MCMIPC-M6_G18_s20232210126174_e20232210128547_c20232210129044.nc",
+      "time": "2023-08-09 01:26:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0126Z-a822b4",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_pm",
+      "key": "ABI-L2-MCMIPC/2023/221/01/OR_ABI-L2-MCMIPC-M6_G18_s20232210131174_e20232210133547_c20232210134056.nc",
+      "time": "2023-08-09 01:31:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0131Z-d4d94a",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_pm",
+      "key": "ABI-L2-MCMIPC/2023/221/01/OR_ABI-L2-MCMIPC-M6_G18_s20232210136174_e20232210138559_c20232210139040.nc",
+      "time": "2023-08-09 01:36:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0136Z-8c71cf",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 10,
+        "schedule_recheck": 0
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_pm",
+      "key": "ABI-L2-MCMIPC/2023/221/01/OR_ABI-L2-MCMIPC-M6_G18_s20232210141174_e20232210143553_c20232210144052.nc",
+      "time": "2023-08-09 01:41:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0141Z-901dfe",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.04
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 9
+      },
+      "negative": false,
+      "reviews": 2,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_pm",
+      "key": "ABI-L2-MCMIPC/2023/221/01/OR_ABI-L2-MCMIPC-M6_G18_s20232210146174_e20232210148547_c20232210149050.nc",
+      "time": "2023-08-09 01:46:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0146Z-af2d3b",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.04
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 9
+      },
+      "negative": false,
+      "reviews": 2,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_pm",
+      "key": "ABI-L2-MCMIPC/2023/221/01/OR_ABI-L2-MCMIPC-M6_G18_s20232210151174_e20232210153559_c20232210154056.nc",
+      "time": "2023-08-09 01:51:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0151Z-ff050d",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.04
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "schedule_recheck": 0,
+        "query_firms": 0,
+        "request_human_review": 9
+      },
+      "negative": false,
+      "reviews": 2,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_pm",
+      "key": "ABI-L2-MCMIPC/2023/221/01/OR_ABI-L2-MCMIPC-M6_G18_s20232210156174_e20232210158560_c20232210159055.nc",
+      "time": "2023-08-09 01:56:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0156Z-d2526e",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.51,
+        "agent": 0.06
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 3,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_pm",
+      "key": "ABI-L2-MCMIPC/2023/221/02/OR_ABI-L2-MCMIPC-M6_G18_s20232210201174_e20232210203547_c20232210204055.nc",
+      "time": "2023-08-09 02:01:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0201Z-22e343",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 9,
+        "schedule_recheck": 0
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "lahaina_pm",
+      "key": "ABI-L2-MCMIPC/2023/221/02/OR_ABI-L2-MCMIPC-M6_G18_s20232210206174_e20232210208547_c20232210209052.nc",
+      "time": "2023-08-09 02:06:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0206Z-1b91f3",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.04
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 10,
+        "schedule_recheck": 0
+      },
+      "negative": false,
+      "reviews": 2,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "pulehu",
+      "key": "ABI-L2-MCMIPC/2023/221/03/OR_ABI-L2-MCMIPC-M6_G18_s20232210351174_e20232210353547_c20232210354062.nc",
+      "time": "2023-08-09 03:51:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0351Z-e76e95",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.55,
+        "agent": 0.04
+      },
+      "tool_ms": {
+        "track_plume": 13,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "pulehu",
+      "key": "ABI-L2-MCMIPC/2023/221/03/OR_ABI-L2-MCMIPC-M6_G18_s20232210356174_e20232210358547_c20232210359048.nc",
+      "time": "2023-08-09 03:56:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0356Z-2156d2",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.52,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 6,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "pulehu",
+      "key": "ABI-L2-MCMIPC/2023/221/04/OR_ABI-L2-MCMIPC-M6_G18_s20232210401174_e20232210403559_c20232210404062.nc",
+      "time": "2023-08-09 04:01:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0401Z-6ebd3d",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 6,
+        "query_firms": 0,
+        "request_human_review": 10,
+        "schedule_recheck": 0
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "pulehu",
+      "key": "ABI-L2-MCMIPC/2023/221/04/OR_ABI-L2-MCMIPC-M6_G18_s20232210406174_e20232210408559_c20232210409049.nc",
+      "time": "2023-08-09 04:06:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0406Z-1b1943",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.05
+      },
+      "tool_ms": {
+        "track_plume": 6,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 2,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "pulehu",
+      "key": "ABI-L2-MCMIPC/2023/221/04/OR_ABI-L2-MCMIPC-M6_G18_s20232210411174_e20232210413547_c20232210414058.nc",
+      "time": "2023-08-09 04:11:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0411Z-d1b138",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 6,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "pulehu",
+      "key": "ABI-L2-MCMIPC/2023/221/04/OR_ABI-L2-MCMIPC-M6_G18_s20232210416174_e20232210418547_c20232210419049.nc",
+      "time": "2023-08-09 04:16:17+00:00",
+      "daytime": true,
+      "episode": "20230809T0416Z-f8546c",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.05
+      },
+      "tool_ms": {
+        "track_plume": 6,
+        "query_firms": 0,
+        "request_human_review": 12
+      },
+      "negative": false,
+      "reviews": 2,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/12/OR_ABI-L2-MCMIPC-M6_G18_s20232201231173_e20232201233557_c20232201234056.nc",
+      "time": "2023-08-08 12:31:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1231Z-dfce2d",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.1,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 10,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/12/OR_ABI-L2-MCMIPC-M6_G18_s20232201236173_e20232201238551_c20232201239052.nc",
+      "time": "2023-08-08 12:36:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1236Z-9c39fb",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 4,
+        "query_firms": 0,
+        "request_human_review": 11
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/12/OR_ABI-L2-MCMIPC-M6_G18_s20232201241173_e20232201243558_c20232201244049.nc",
+      "time": "2023-08-08 12:41:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1241Z-8bea04",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 4,
+        "query_firms": 0,
+        "request_human_review": 11
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/12/OR_ABI-L2-MCMIPC-M6_G18_s20232201246173_e20232201248559_c20232201249048.nc",
+      "time": "2023-08-08 12:46:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1246Z-ff3a77",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 4,
+        "query_firms": 0,
+        "request_human_review": 11
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/12/OR_ABI-L2-MCMIPC-M6_G18_s20232201251173_e20232201253558_c20232201254060.nc",
+      "time": "2023-08-08 12:51:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1251Z-56317c",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 4,
+        "query_firms": 0,
+        "request_human_review": 11
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/12/OR_ABI-L2-MCMIPC-M6_G18_s20232201256173_e20232201258557_c20232201259057.nc",
+      "time": "2023-08-08 12:56:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1256Z-80d4af",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.51,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 4,
+        "query_firms": 0,
+        "request_human_review": 11
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/13/OR_ABI-L2-MCMIPC-M6_G18_s20232201301173_e20232201303558_c20232201304062.nc",
+      "time": "2023-08-08 13:01:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1301Z-d317dd",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 4,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/13/OR_ABI-L2-MCMIPC-M6_G18_s20232201306173_e20232201308551_c20232201309054.nc",
+      "time": "2023-08-08 13:06:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1306Z-83f29c",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 4,
+        "query_firms": 0,
+        "request_human_review": 11
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/13/OR_ABI-L2-MCMIPC-M6_G18_s20232201311173_e20232201313558_c20232201314057.nc",
+      "time": "2023-08-08 13:11:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1311Z-1549e5",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 4,
+        "query_firms": 0,
+        "request_human_review": 11
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/13/OR_ABI-L2-MCMIPC-M6_G18_s20232201316173_e20232201318551_c20232201319054.nc",
+      "time": "2023-08-08 13:16:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1316Z-329431",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.07,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 4,
+        "query_firms": 0,
+        "request_human_review": 12
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/13/OR_ABI-L2-MCMIPC-M6_G18_s20232201321173_e20232201323558_c20232201324056.nc",
+      "time": "2023-08-08 13:21:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1321Z-b150a8",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 4,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/13/OR_ABI-L2-MCMIPC-M6_G18_s20232201326173_e20232201328558_c20232201329043.nc",
+      "time": "2023-08-08 13:26:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1326Z-6a63d2",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 4,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/13/OR_ABI-L2-MCMIPC-M6_G18_s20232201331173_e20232201333557_c20232201334053.nc",
+      "time": "2023-08-08 13:31:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1331Z-68dcd0",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 4,
+        "query_firms": 0,
+        "request_human_review": 11
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/13/OR_ABI-L2-MCMIPC-M6_G18_s20232201336173_e20232201338559_c20232201339052.nc",
+      "time": "2023-08-08 13:36:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1336Z-cae33e",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.07,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 4,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/13/OR_ABI-L2-MCMIPC-M6_G18_s20232201341173_e20232201343551_c20232201344062.nc",
+      "time": "2023-08-08 13:41:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1341Z-20dce3",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.06,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 4,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/13/OR_ABI-L2-MCMIPC-M6_G18_s20232201346173_e20232201348558_c20232201349049.nc",
+      "time": "2023-08-08 13:46:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1346Z-a0ad1c",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.07,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 4,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/13/OR_ABI-L2-MCMIPC-M6_G18_s20232201351173_e20232201353558_c20232201354064.nc",
+      "time": "2023-08-08 13:51:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1351Z-7b562f",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.07,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 4,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/13/OR_ABI-L2-MCMIPC-M6_G18_s20232201356173_e20232201358552_c20232201359049.nc",
+      "time": "2023-08-08 13:56:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1356Z-9b18a3",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 5.49,
+        "background": 32.14,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 6,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/14/OR_ABI-L2-MCMIPC-M6_G18_s20232201401173_e20232201403558_c20232201404057.nc",
+      "time": "2023-08-08 14:01:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1401Z-ff5bf6",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 6.82,
+        "background": 22.28,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 6,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/14/OR_ABI-L2-MCMIPC-M6_G18_s20232201406173_e20232201408552_c20232201409066.nc",
+      "time": "2023-08-08 14:06:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1406Z-1bd369",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 8.25,
+        "background": 22.09,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 6,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/14/OR_ABI-L2-MCMIPC-M6_G18_s20232201411173_e20232201413546_c20232201414052.nc",
+      "time": "2023-08-08 14:11:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1411Z-97416f",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 7.73,
+        "background": 20.0,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 6,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/14/OR_ABI-L2-MCMIPC-M6_G18_s20232201416173_e20232201418557_c20232201419057.nc",
+      "time": "2023-08-08 14:16:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1416Z-e07529",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 6.52,
+        "background": 100.93,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 6,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/14/OR_ABI-L2-MCMIPC-M6_G18_s20232201421173_e20232201423546_c20232201424068.nc",
+      "time": "2023-08-08 14:21:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1421Z-f19591",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 37.82,
+        "background": 55.88,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 7,
+        "query_firms": 0,
+        "request_human_review": 10,
+        "schedule_recheck": 0
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/14/OR_ABI-L2-MCMIPC-M6_G18_s20232201426173_e20232201428552_c20232201429052.nc",
+      "time": "2023-08-08 14:26:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1426Z-28fbb9",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 6.64,
+        "background": 42.1,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 5,
+        "query_firms": 0,
+        "request_human_review": 10
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/14/OR_ABI-L2-MCMIPC-M6_G18_s20232201431173_e20232201433552_c20232201434053.nc",
+      "time": "2023-08-08 14:31:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1431Z-c4fbfe",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 7.0,
+        "background": 137.62,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 7,
+        "query_firms": 0,
+        "request_human_review": 12
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/14/OR_ABI-L2-MCMIPC-M6_G18_s20232201436173_e20232201438557_c20232201439059.nc",
+      "time": "2023-08-08 14:36:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1436Z-9b955d",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 67.14,
+        "background": 137.85,
+        "agent": 0.03
+      },
+      "tool_ms": {
+        "track_plume": 7,
+        "query_firms": 0,
+        "request_human_review": 11
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/14/OR_ABI-L2-MCMIPC-M6_G18_s20232201441173_e20232201443552_c20232201444058.nc",
+      "time": "2023-08-08 14:41:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1441Z-1486f9",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 45.59,
+        "background": 68.21,
+        "agent": 0.13
+      },
+      "tool_ms": {
+        "track_plume": 35,
+        "query_firms": 14,
+        "request_human_review": 31
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/14/OR_ABI-L2-MCMIPC-M6_G18_s20232201446173_e20232201448546_c20232201449062.nc",
+      "time": "2023-08-08 14:46:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1446Z-2806e4",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 25.25,
+        "background": 51.14,
+        "agent": 0.06
+      },
+      "tool_ms": {
+        "track_plume": 14,
+        "query_firms": 2,
+        "request_human_review": 19,
+        "schedule_recheck": 0
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/14/OR_ABI-L2-MCMIPC-M6_G18_s20232201451173_e20232201453546_c20232201454048.nc",
+      "time": "2023-08-08 14:51:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1451Z-bfd79e",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 7.48,
+        "background": 36.33,
+        "agent": 0.09
+      },
+      "tool_ms": {
+        "track_plume": 13,
+        "query_firms": 9,
+        "request_human_review": 26
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/14/OR_ABI-L2-MCMIPC-M6_G18_s20232201456173_e20232201458551_c20232201459057.nc",
+      "time": "2023-08-08 14:56:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1456Z-2916af",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 6.97,
+        "background": 82.03,
+        "agent": 0.11
+      },
+      "tool_ms": {
+        "track_plume": 26,
+        "query_firms": 1,
+        "request_human_review": 29
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/15/OR_ABI-L2-MCMIPC-M6_G18_s20232201501173_e20232201503546_c20232201504062.nc",
+      "time": "2023-08-08 15:01:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1501Z-ccd706",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 36.66,
+        "background": 26.22,
+        "agent": 0.05
+      },
+      "tool_ms": {
+        "track_plume": 11,
+        "query_firms": 2,
+        "request_human_review": 17
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/15/OR_ABI-L2-MCMIPC-M6_G18_s20232201506173_e20232201508558_c20232201509051.nc",
+      "time": "2023-08-08 15:06:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1506Z-a506f1",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 30.96,
+        "background": 125.03,
+        "agent": 0.13
+      },
+      "tool_ms": {
+        "track_plume": 30,
+        "query_firms": 19,
+        "request_human_review": 30
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/15/OR_ABI-L2-MCMIPC-M6_G18_s20232201511173_e20232201513559_c20232201514050.nc",
+      "time": "2023-08-08 15:11:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1511Z-2d3e1a",
+      "background_scans": 8,
+      "errors": [],
+      "latency_s": {
+        "frame": 7.16,
+        "background": 59.53,
+        "agent": 0.07
+      },
+      "tool_ms": {
+        "track_plume": 9,
+        "query_firms": 3,
+        "request_human_review": 22,
+        "schedule_recheck": 0
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/15/OR_ABI-L2-MCMIPC-M6_G18_s20232201516173_e20232201518557_c20232201519063.nc",
+      "time": "2023-08-08 15:16:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1516Z-d1133c",
+      "background_scans": 8,
+      "errors": [],
+      "latency_s": {
+        "frame": 7.53,
+        "background": 90.49,
+        "agent": 0.09
+      },
+      "tool_ms": {
+        "track_plume": 25,
+        "query_firms": 3,
+        "request_human_review": 21
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/15/OR_ABI-L2-MCMIPC-M6_G18_s20232201521173_e20232201523559_c20232201524053.nc",
+      "time": "2023-08-08 15:21:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1521Z-bb4fe5",
+      "background_scans": 8,
+      "errors": [],
+      "latency_s": {
+        "frame": 60.54,
+        "background": 240.1,
+        "agent": 0.04
+      },
+      "tool_ms": {
+        "track_plume": 10,
+        "query_firms": 0,
+        "request_human_review": 11
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "kohala_ranch",
+      "key": "ABI-L2-MCMIPC/2023/220/15/OR_ABI-L2-MCMIPC-M6_G18_s20232201526173_e20232201528558_c20232201529056.nc",
+      "time": "2023-08-08 15:26:17+00:00",
+      "daytime": false,
+      "episode": "20230808T1526Z-bd5da3",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 7.84,
+        "background": 134.89,
+        "agent": 0.04
+      },
+      "tool_ms": {
+        "track_plume": 10,
+        "query_firms": 0,
+        "request_human_review": 14,
+        "schedule_recheck": 0
+      },
+      "negative": false,
+      "reviews": 1,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "clear_0806",
+      "key": "ABI-L2-MCMIPC/2023/218/20/OR_ABI-L2-MCMIPC-M6_G18_s20232182001170_e20232182003543_c20232182004045.nc",
+      "time": "2023-08-06 20:01:17+00:00",
+      "daytime": true,
+      "episode": "20230806T2001Z-388f22",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.92,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": true,
+      "kind": "clear",
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "clear_0806",
+      "key": "ABI-L2-MCMIPC/2023/218/23/OR_ABI-L2-MCMIPC-M6_G18_s20232182301170_e20232182303555_c20232182304040.nc",
+      "time": "2023-08-06 23:01:17+00:00",
+      "daytime": true,
+      "episode": "20230806T2301Z-b51fb6",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.92,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": true,
+      "kind": "clear",
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "clear_0806",
+      "key": "ABI-L2-MCMIPC/2023/219/01/OR_ABI-L2-MCMIPC-M6_G18_s20232190101170_e20232190103549_c20232190104046.nc",
+      "time": "2023-08-07 01:01:17+00:00",
+      "daytime": true,
+      "episode": "20230807T0101Z-6ec8c7",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.65,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": true,
+      "kind": "clear",
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "clear_0806",
+      "key": "ABI-L2-MCMIPC/2023/219/09/OR_ABI-L2-MCMIPC-M6_G18_s20232190901171_e20232190903555_c20232190904042.nc",
+      "time": "2023-08-07 09:01:17+00:00",
+      "daytime": false,
+      "episode": "20230807T0901Z-5380bf",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 1.07,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": true,
+      "kind": "clear",
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "vog_0110",
+      "key": "ABI-L2-MCMIPC/2023/010/20/OR_ABI-L2-MCMIPC-M6_G18_s20230102001172_e20230102003545_c20230102004065.nc",
+      "time": "2023-01-10 20:01:17+00:00",
+      "daytime": true,
+      "episode": "20230110T2001Z-bbe503",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 1.35,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": true,
+      "kind": "vog",
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "vog_0110",
+      "key": "ABI-L2-MCMIPC/2023/010/23/OR_ABI-L2-MCMIPC-M6_G18_s20230102301172_e20230102303546_c20230102304054.nc",
+      "time": "2023-01-10 23:01:17+00:00",
+      "daytime": true,
+      "episode": "20230110T2301Z-561dd1",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 1.41,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": true,
+      "kind": "vog",
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "vog_0110",
+      "key": "ABI-L2-MCMIPC/2023/011/01/OR_ABI-L2-MCMIPC-M6_G18_s20230110101172_e20230110103557_c20230110104066.nc",
+      "time": "2023-01-11 01:01:17+00:00",
+      "daytime": true,
+      "episode": "20230111T0101Z-fea12b",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 0.92,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": true,
+      "kind": "vog",
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "vog_0110",
+      "key": "ABI-L2-MCMIPC/2023/011/09/OR_ABI-L2-MCMIPC-M6_G18_s20230110901172_e20230110903545_c20230110904056.nc",
+      "time": "2023-01-11 09:01:17+00:00",
+      "daytime": false,
+      "episode": "20230111T0901Z-3749aa",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 1.33,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": true,
+      "kind": "vog",
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "vog_0912",
+      "key": "ABI-L2-MCMIPC/2023/255/20/OR_ABI-L2-MCMIPC-M6_G18_s20232552001181_e20232552003554_c20232552004061.nc",
+      "time": "2023-09-12 20:01:18+00:00",
+      "daytime": true,
+      "episode": "20230912T2001Z-774339",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 1.62,
+        "agent": 0.02
+      },
+      "tool_ms": {
+        "dismiss": 0
+      },
+      "negative": true,
+      "kind": "vog",
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 1
+    },
+    {
+      "case": "vog_0912",
+      "key": "ABI-L2-MCMIPC/2023/255/23/OR_ABI-L2-MCMIPC-M6_G18_s20232552301181_e20232552303554_c20232552304062.nc",
+      "time": "2023-09-12 23:01:18+00:00",
+      "daytime": true,
+      "episode": "20230912T2301Z-8c7d05",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 1.35,
+        "agent": 0.02
+      },
+      "tool_ms": {
+        "dismiss": 0
+      },
+      "negative": true,
+      "kind": "vog",
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 1
+    },
+    {
+      "case": "vog_0912",
+      "key": "ABI-L2-MCMIPC/2023/256/01/OR_ABI-L2-MCMIPC-M6_G18_s20232560101181_e20232560103566_c20232560104056.nc",
+      "time": "2023-09-13 01:01:18+00:00",
+      "daytime": true,
+      "episode": "20230913T0101Z-42b374",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.98,
+        "agent": 0.02
+      },
+      "tool_ms": {
+        "dismiss": 0
+      },
+      "negative": true,
+      "kind": "vog",
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 1
+    },
+    {
+      "case": "vog_0912",
+      "key": "ABI-L2-MCMIPC/2023/256/09/OR_ABI-L2-MCMIPC-M6_G18_s20232560901182_e20232560903555_c20232560904059.nc",
+      "time": "2023-09-13 09:01:18+00:00",
+      "daytime": false,
+      "episode": "20230913T0901Z-5faf73",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 1.67,
+        "agent": 0.01
+      },
+      "tool_ms": {
+        "dismiss": 0
+      },
+      "negative": true,
+      "kind": "vog",
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 1
+    },
+    {
+      "case": "glint_0615",
+      "key": "ABI-L2-MCMIPC/2023/166/22/OR_ABI-L2-MCMIPC-M6_G18_s20231662231182_e20231662233555_c20231662234081.nc",
+      "time": "2023-06-15 22:31:18+00:00",
+      "daytime": true,
+      "episode": "20230615T2231Z-fc9ffa",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.95,
+        "agent": 0.02
+      },
+      "tool_ms": {
+        "dismiss": 0
+      },
+      "negative": true,
+      "kind": "glint",
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 1
+    },
+    {
+      "case": "glint_0615",
+      "key": "ABI-L2-MCMIPC/2023/166/23/OR_ABI-L2-MCMIPC-M6_G18_s20231662331182_e20231662333567_c20231662334088.nc",
+      "time": "2023-06-15 23:31:18+00:00",
+      "daytime": true,
+      "episode": "20230615T2331Z-2f430e",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.52,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": true,
+      "kind": "glint",
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "glint_0615",
+      "key": "ABI-L2-MCMIPC/2023/167/00/OR_ABI-L2-MCMIPC-M6_G18_s20231670031182_e20231670033555_c20231670034089.nc",
+      "time": "2023-06-16 00:31:18+00:00",
+      "daytime": true,
+      "episode": "20230616T0031Z-431381",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 0.53,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": true,
+      "kind": "glint",
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "cloudy_0128",
+      "key": "ABI-L2-MCMIPC/2023/028/20/OR_ABI-L2-MCMIPC-M6_G18_s20230282001182_e20230282003561_c20230282004089.nc",
+      "time": "2023-01-28 20:01:18+00:00",
+      "daytime": true,
+      "episode": "20230128T2001Z-235e18",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 1.4,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": true,
+      "kind": "cloudy",
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "cloudy_0128",
+      "key": "ABI-L2-MCMIPC/2023/028/23/OR_ABI-L2-MCMIPC-M6_G18_s20230282301183_e20230282303567_c20230282304085.nc",
+      "time": "2023-01-28 23:01:18+00:00",
+      "daytime": true,
+      "episode": "20230128T2301Z-242f3a",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 1.44,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": true,
+      "kind": "cloudy",
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "cloudy_0128",
+      "key": "ABI-L2-MCMIPC/2023/029/01/OR_ABI-L2-MCMIPC-M6_G18_s20230290101183_e20230290103556_c20230290104106.nc",
+      "time": "2023-01-29 01:01:18+00:00",
+      "daytime": true,
+      "episode": "20230129T0101Z-9968d5",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.01,
+        "background": 1.03,
+        "agent": 0.02
+      },
+      "tool_ms": {},
+      "negative": true,
+      "kind": "cloudy",
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    },
+    {
+      "case": "cloudy_0128",
+      "key": "ABI-L2-MCMIPC/2023/029/09/OR_ABI-L2-MCMIPC-M6_G18_s20230290901183_e20230290903565_c20230290904077.nc",
+      "time": "2023-01-29 09:01:18+00:00",
+      "daytime": false,
+      "episode": "20230129T0901Z-3fa31e",
+      "background_scans": 9,
+      "errors": [],
+      "latency_s": {
+        "frame": 0.0,
+        "background": 1.44,
+        "agent": 0.01
+      },
+      "tool_ms": {},
+      "negative": true,
+      "kind": "cloudy",
+      "reviews": 0,
+      "fp_reviews": 0,
+      "volcanic_dismissed": 0
+    }
+  ],
+  "precision": {
+    "tp_reviews": 84,
+    "fp_reviews": 0,
+    "precision": 1.0,
+    "negative_frames": 19,
+    "false_alarm_frames": 0,
+    "unique_frames": 158,
+    "fp_firms_corroborated": 0,
+    "precision_if_corroborated_tp": 1.0,
+    "fp_detail": []
+  },
+  "latency_s": {
+    "frame": {
+      "median": 0.01,
+      "max": 67.14
+    },
+    "background": {
+      "median": 0.07,
+      "max": 240.1
+    },
+    "agent": {
+      "median": 0.03,
+      "max": 0.58
+    }
+  },
+  "tool_ms": {
+    "track_plume": {
+      "median": 5,
+      "max": 161,
+      "n": 83
+    },
+    "schedule_recheck": {
+      "median": 0,
+      "max": 0,
+      "n": 17
+    },
+    "query_firms": {
+      "median": 0,
+      "max": 550,
+      "n": 75
+    },
+    "request_human_review": {
+      "median": 11,
+      "max": 31,
+      "n": 75
+    },
+    "dismiss": {
+      "median": 0,
+      "max": 0,
+      "n": 5
+    }
+  }
+}

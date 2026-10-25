@@ -10,3 +10,5 @@ eval/runs/
 eval/logs/
 .env.local
 .env*.local
+eval/runs_ctx/
+eval/failures_ctx/

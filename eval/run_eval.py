@@ -103,9 +103,12 @@ def attribute(review_ll, t, fires) -> str | None:
     return None
 
 
+RUNS, SUFFIX = "runs", ""   # --contextual: eval/runs_ctx/, results_ctx.*, failures_ctx/
+
+
 def run_case(case, cfg, cache, policy_name) -> list[dict]:
     """Replay one case in a fresh store; return one record per scan."""
-    root = os.path.join(HERE, "runs", case["id"])
+    root = os.path.join(HERE, RUNS, case["id"])
     shutil.rmtree(root, ignore_errors=True)
     store = LocalStore(root)
 
@@ -162,7 +165,7 @@ def run_case(case, cfg, cache, policy_name) -> list[dict]:
 
 
 def cached_case(case, cfg, cache, policy_name, resume: bool) -> list[dict]:
-    path = os.path.join(HERE, "runs", case["id"], "records.json")
+    path = os.path.join(HERE, RUNS, case["id"], "records.json")
     if resume and os.path.exists(path):
         with open(path) as f:
             recs = json.load(f)
@@ -198,7 +201,13 @@ def main(argv=None):
     ap.add_argument("--only", default="")
     ap.add_argument("--policy", default="rules")
     ap.add_argument("--resume", action="store_true", help="reuse checkpointed cases")
+    ap.add_argument("--contextual", action="store_true",
+                    help="experiment: MODIS contextual test on; separate runs/results files")
     a = ap.parse_args(argv)
+    global RUNS, SUFFIX
+    if a.contextual:
+        fire.FP["contextual"] = True
+        RUNS, SUFFIX = "runs_ctx", "_ctx"
     cfg = load_cases()
     cache = cfg.get("frames_dir", ".cache/goes")
     archive = os.environ.get("FIRMS_ARCHIVE_DIR", ".cache/firms")
@@ -206,11 +215,11 @@ def main(argv=None):
     polar_note = ensure_noaa20(archive, cfg)
     only = set(filter(None, a.only.split(",")))
     fires = known_fires(cfg)
-    results = {"generated_utc": dt.datetime.now(dt.timezone.utc).isoformat(), "policy": a.policy,
+    results = {"generated_utc": dt.datetime.now(dt.timezone.utc).isoformat(), "policy": a.policy, "contextual": fire.FP["contextual"],
                "polar_sensors_note": polar_note,
                "events": [], "negatives": [], "frames": []}
     frames_seen: dict[str, dict] = {}
-    gallery = os.path.join(HERE, "failures")
+    gallery = os.path.join(HERE, "failures" + SUFFIX)
     shutil.rmtree(gallery, ignore_errors=True)
 
     for ev in cfg["events"]:
@@ -320,10 +329,10 @@ def main(argv=None):
             tool.setdefault(k, []).append(v)
     results["tool_ms"] = {k: {"median": sorted(v)[len(v) // 2], "max": max(v), "n": len(v)} for k, v in tool.items()}
 
-    with open(os.path.join(HERE, "results.json"), "w") as f:
+    with open(os.path.join(HERE, f"results{SUFFIX}.json"), "w") as f:
         json.dump(results, f, indent=2, default=str)
     write_md(results)
-    print("wrote eval/results.md, eval/results.json")
+    print(f"wrote eval/results{SUFFIX}.md, eval/results{SUFFIX}.json")
 
 
 def _dur(m: int) -> str:
@@ -414,7 +423,7 @@ def write_md(R):
                if f["firms_corroborated"] else "no FIRMS corroboration")
         L.append(f"- **FP — {tag}** — {f['case']} {f['time']:%m-%d %H:%M}Z at {f['lat']:.3f}, {f['lon']:.3f} "
                  f"(+{f['max_ddt_k']} K): {f['rationale']}" + (f" ![]({f['gallery']})" if f.get("gallery") else ""))
-    with open(os.path.join(HERE, "results.md"), "w") as fh:
+    with open(os.path.join(HERE, f"results{SUFFIX}.md"), "w") as fh:
         fh.write("\n".join(L) + "\n")
 
 

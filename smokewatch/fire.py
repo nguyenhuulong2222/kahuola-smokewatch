@@ -40,6 +40,8 @@ FP = {
     "d_t14_min": -3.0,         # ΔC14 > this: current pixel not cloud-covered
     "cluster_px": 3,           # anomaly pixels this close form one candidate
     "persist_px": 2,           # hotspot "same place" tolerance between scans
+    # contextual test (experiment, off by default): MODIS parameters, see contextual_test()
+    "contextual": False,
     # smoke as change vs background (reflectance), daytime only
     "smoke_dvis": 0.008,
     "smoke_swir_frac": 0.45,   # ΔC05/ΔVIS: clouds ≈ 1.1, smoke ≈ 0.3
@@ -176,9 +178,91 @@ def thermal_delta(frame: Frame, bg: Background) -> dict[str, np.ndarray]:
 
 def thermal_anomaly(frame: Frame, bg: Background, p=FP) -> np.ndarray:
     d = thermal_delta(frame, bg)
+    land = land_mask(frame)
     with np.errstate(invalid="ignore"):
         m = ((d["ddt"] > p["d_dt_min"]) & (d["d7"] > p["d_t7_min"]) & (d["d14"] > p["d_t14_min"]))
-    return (m & np.isfinite(d["ddt"]) & land_mask(frame)).astype(np.uint8)
+    m = m & np.isfinite(d["ddt"]) & land
+    if p.get("contextual"):
+        m = contextual_test(frame, d, m, land, p)
+    return m.astype(np.uint8)
+
+
+# Published constants, Giglio, Descloitres, Justice & Kaufman (2003), "An enhanced contextual
+# fire detection algorithm for MODIS", Remote Sens. Environ. 87:273-282 (Sect. 2.2.4-2.2.5);
+# kept unchanged in Collection 6 (Giglio, Schroeder & Justice 2016, RSE 178:31-41).
+# NOT tuned on our eval set.
+MODIS_CTX = {
+    "win_min": 3, "win_max": 21,      # background window grows 3x3 -> 21x21
+    "min_valid_frac": 0.25,           # until >= 25 % of window pixels are valid ...
+    "min_valid": 8,                   # ... and >= 8 valid pixels
+    "k_dt": 3.5,                      # test 2: dT > mean_dT + 3.5 delta_dT
+    "dt_abs": 6.0,                    # test 3: dT > mean_dT + 6 K
+    "k_t4": 3.0,                      # test 4: T4 > mean_T4 + 3 delta_T4
+    "t11_margin": 4.0,                # test 5: T11 > mean_T11 + delta_T11 - 4 K
+    "bgfire_dev": 5.0,                # test 6: delta'_T4 (rejected background fires) > 5 K
+    "t4_abs_day": 360.0, "t4_abs_night": 320.0,   # test 1: absolute pass-through
+    # background fire pixels, excluded from the window statistics (raw T4, T4 - T11)
+    "bgfire_t4_day": 325.0, "bgfire_dt_day": 20.0,
+    "bgfire_t4_night": 310.0, "bgfire_dt_night": 10.0,
+}
+
+
+def _mad(a: np.ndarray) -> float:
+    return float(np.mean(np.abs(a - a.mean())))   # Giglio's delta = mean absolute deviation
+
+
+def contextual_test(frame: Frame, d: dict, cand: np.ndarray, land: np.ndarray, p=FP,
+                    c=MODIS_CTX) -> np.ndarray:
+    """Adaptation of the MODIS contextual fire test to the background-differenced fields.
+
+    MODIS compares a pixel with its spatial neighbours in raw brightness temperatures. Here
+    every field is already a change vs the same pixel on previous days, so the mapping is:
+      MODIS dT  (T4 - T11)  ->  our Δ(C07 - C14)   (d["ddt"])
+      MODIS T4  (3.9 µm)    ->  our ΔC07            (d["d7"])
+      MODIS T11 (11 µm)     ->  our ΔC14            (d["d14"])
+    so the contextual test asks: is this pixel's CHANGE an outlier against the change of its
+    neighbours? A broad heating anomaly (sun on dry ground, a warm day) warms the neighbours
+    too and fails; a fire raises one or two pixels. Valid background pixels: land, finite,
+    not cloud-covered now (ΔC14 > d_t14_min) and not a "background fire" by Giglio's raw
+    thresholds (T4 > 325 K and T4 - T11 > 20 K by day; 310 K / 10 K at night). A pixel whose window never reaches enough
+    valid neighbours is "unknown" in MODIS and is not a fire. Test 1 (absolute) uses the
+    raw C07 brightness temperature, as published.
+    Fire = test1 OR (tests 2, 3, 4 AND (test 5 OR test 6)).
+    """
+    ddt, d7, d14 = d["ddt"], d["d7"], d["d14"]
+    day = vision.is_daytime(frame)
+    t4, t11 = frame.bands["C07"], frame.bands["C14"]
+    t4_abs = c["t4_abs_day"] if day else c["t4_abs_night"]
+    with np.errstate(invalid="ignore"):
+        bgfire = land & (t4 > c["bgfire_t4_day" if day else "bgfire_t4_night"]) \
+            & (t4 - t11 > c["bgfire_dt_day" if day else "bgfire_dt_night"])
+        valid = land & np.isfinite(ddt) & (d14 > p["d_t14_min"]) & ~bgfire
+    out = np.zeros_like(cand)
+    H, W = cand.shape
+    for r, col in zip(*np.nonzero(cand)):
+        if np.isfinite(t4[r, col]) and t4[r, col] > t4_abs:
+            out[r, col] = True
+            continue
+        for w in range(c["win_min"], c["win_max"] + 1, 2):
+            h = w // 2
+            sl = (slice(max(r - h, 0), min(r + h + 1, H)), slice(max(col - h, 0), min(col + h + 1, W)))
+            v = valid[sl]
+            n = int(v.sum())
+            if n < c["min_valid"] or n < c["min_valid_frac"] * v.size:
+                continue
+            bdt, b7, b14 = ddt[sl][v], d7[sl][v], d14[sl][v]
+            m_dt, s_dt = float(bdt.mean()), _mad(bdt)
+            m7, s7 = float(b7.mean()), _mad(b7)
+            m14, s14 = float(b14.mean()), _mad(b14)
+            bf = bgfire[sl].copy()
+            bf[r - sl[0].start, col - sl[1].start] = False
+            t6 = bool(bf.sum() > 1 and _mad(d7[sl][bf]) > c["bgfire_dev"])
+            out[r, col] = (ddt[r, col] > m_dt + c["k_dt"] * s_dt
+                           and ddt[r, col] > m_dt + c["dt_abs"]
+                           and d7[r, col] > m7 + c["k_t4"] * s7
+                           and (d14[r, col] > m14 + s14 - c["t11_margin"] or t6))
+            break
+    return out
 
 
 # ------------------------------------------------------------------ smoke (supporting)
