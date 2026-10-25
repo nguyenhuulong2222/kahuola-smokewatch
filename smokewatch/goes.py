@@ -22,6 +22,10 @@ import cv2
 import numpy as np
 
 BUCKET = os.environ.get("GOES_BUCKET", "noaa-goes18")
+# prefetch runs PREFETCH_WORKERS files at once and download_file splits each into up to
+# PART_CONCURRENCY ranged GETs, all on the one shared client: size its pool for both.
+PREFETCH_WORKERS = 8
+PART_CONCURRENCY = 10   # boto3 TransferConfig default
 
 # Hawaiʻi main islands bbox (lat_min, lat_max, lon_min, lon_max)
 HAWAII_BBOX = (18.5, 22.6, -160.6, -154.6)
@@ -68,7 +72,8 @@ def _s3():
     from botocore import UNSIGNED
     from botocore.config import Config
     return boto3.client("s3", region_name="us-east-1",
-                        config=Config(signature_version=UNSIGNED, retries={"max_attempts": 3}))
+                        config=Config(signature_version=UNSIGNED, retries={"max_attempts": 3},
+                                      max_pool_connections=PREFETCH_WORKERS * PART_CONCURRENCY))
 
 
 def _hour_keys_uncached(sector: str, hour: dt.datetime) -> tuple[str, ...]:
@@ -118,7 +123,9 @@ def download(key: str, cache_dir: str = "/tmp/goes") -> str:
     os.makedirs(cache_dir, exist_ok=True)
     path = os.path.join(cache_dir, os.path.basename(key))
     if not os.path.exists(path):
-        _s3().download_file(BUCKET, key, path + ".part")
+        from boto3.s3.transfer import TransferConfig
+        _s3().download_file(BUCKET, key, path + ".part",
+                            Config=TransferConfig(max_concurrency=PART_CONCURRENCY))
         os.replace(path + ".part", path)
     return path
 
@@ -222,7 +229,7 @@ def load_key(key: str, cache_dir: str = "/tmp/goes") -> Frame:
     return fr
 
 
-def prefetch(keys: list[str], cache_dir: str = "/tmp/goes", workers: int = 8) -> None:
+def prefetch(keys: list[str], cache_dir: str = "/tmp/goes", workers: int = PREFETCH_WORKERS) -> None:
     """Download raw files for keys not yet cached, in parallel threads (S3 I/O only; the
     netCDF decode stays single-threaded in load_key because HDF5 is not thread-safe)."""
     from concurrent.futures import ThreadPoolExecutor
