@@ -12,3 +12,4 @@ eval/logs/
 .env*.local
 eval/runs_ctx/
 eval/failures_ctx/
+smokewatch-submission.zip
