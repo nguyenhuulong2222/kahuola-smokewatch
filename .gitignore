@@ -13,3 +13,9 @@ eval/logs/
 eval/runs_ctx/
 eval/failures_ctx/
 smokewatch-submission.zip
+video/.venv/
+video/build/
+video/clips/
+video/narr/
+video/*.mp4
+video/*.png

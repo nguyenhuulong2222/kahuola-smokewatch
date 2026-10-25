@@ -19,7 +19,7 @@ evidence, a human approves what is published. Lahaina: hours before the first po
 * Lahaina replay, deep link:
   https://dgmg5co6ld62forty2ubtcwehy0uawnd.lambda-url.us-east-1.on.aws/?date=2023-08-08&t=0136Z&region=maui#viewer
 * Code: https://github.com/nguyenhuulong2222/kahuola-smokewatch
-* Video: _(to be added)_
+* Video: _(to be added)_ — video description must include: "Narration is AI-generated."
 
 ## Inspiration
 
