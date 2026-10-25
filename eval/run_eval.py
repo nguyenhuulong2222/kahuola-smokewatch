@@ -287,14 +287,29 @@ def main(argv=None):
                                  {"reviews": sum(c["action"] == "request_human_review" for c in r["candidates"]),
                                   "fp_reviews": frame_fp,
                                   "volcanic_dismissed": sum(bool(c["volcanic"]) for c in r["candidates"])})
-    for r, c in fp_list[:8]:
+    # Secondary breakdown (the strict rule above stays the headline): is a strict FP a real
+    # fire nonetheless — spread beyond the origin radius, or a fire not in cases.yaml?
+    # Corroborated = ≥1 FIRMS vegetation-fire point (type 0) within 3 km within ±24 h.
+    n_corr = 0
+    for r, c in fp_list:
+        pts = firms.archive_points(archive, r["time"] - dt.timedelta(hours=24), r["time"] + dt.timedelta(hours=24))
+        c["firms_corroborated"] = sum(p["type"] == "0" and km((p["lat"], p["lon"]), (c["lat"], c["lon"])) <= 3
+                                      for p in pts)
+        c["nearest_known_km"] = round(min(km((c["lat"], c["lon"]), f["origin"]) for f in fires), 1)
+        n_corr += c["firms_corroborated"] > 0
+    order = sorted(fp_list, key=lambda rc: rc[1]["firms_corroborated"] > 0)   # uncorroborated first
+    for r, c in order[:8]:
         c["gallery"] = overlay_crop(r["case"], r, cache, (c["lat"], c["lon"]), gallery, f"fp{c['det_id']}")
     results["precision"] = {"tp_reviews": tp, "fp_reviews": fp,
                             "precision": round(tp / (tp + fp), 3) if tp + fp else None,
                             "negative_frames": neg_frames, "false_alarm_frames": fa_frames,
                             "unique_frames": len(frames_seen),
+                            "fp_firms_corroborated": n_corr,
+                            "precision_if_corroborated_tp": round((tp + n_corr) / (tp + fp), 3) if tp + fp else None,
                             "fp_detail": [{"case": r["case"], "time": r["time"], "lat": c["lat"], "lon": c["lon"],
                                            "max_ddt_k": c["max_ddt_k"], "rationale": c["rationale"],
+                                           "firms_corroborated": c["firms_corroborated"],
+                                           "nearest_known_km": c["nearest_known_km"],
                                            "gallery": c.get("gallery")} for r, c in fp_list]}
     lat = [f["latency_s"] for f in results["frames"]]
     results["latency_s"] = {k: {"median": round(sorted(x[k] for x in lat)[len(lat) // 2], 2),
@@ -372,7 +387,12 @@ def write_md(R):
     L += ["", "## Precision", "",
           f"- Reviews: **{P['tp_reviews']} TP / {P['fp_reviews']} FP → precision {P['precision']}** "
           "(per review, unique frames, positive + negative days).",
-          f"- Negative-day frames with any false review: **{P['false_alarm_frames']} / {P['negative_frames']}**.", "",
+          f"- Negative-day frames with any false review: **{P['false_alarm_frames']} / {P['negative_frames']}**.",
+          f"- Of the {P['fp_reviews']} strict FPs, **{P['fp_firms_corroborated']} are corroborated by FIRMS** "
+          "(≥1 vegetation-fire detection within 3 km, ±24 h) — fire spreading beyond the origin radius "
+          f"or a fire not listed; counting those as real fires would give precision "
+          f"{P['precision_if_corroborated_tp']}. The remaining {P['fp_reviews'] - P['fp_firms_corroborated']} "
+          "have no corroboration and are listed first under Failure cases.", "",
           "| Negative case | Kind | Frames | Reviews (all FP) | Volcanic dismissed | FIRMS non-volcanic pts that day | Label source |",
           "|---|---|---|---|---|---|---|"]
     for n in R["negatives"]:
@@ -389,8 +409,10 @@ def write_md(R):
         if e["first_review"] is None:
             L.append(f"- **Missed: {e['name']}** — no review within {e['radius_km']} km in {e['scans']} scans. "
                      + " ".join(f"![]({g})" for g in e["gallery"]))
-    for f in P["fp_detail"]:
-        L.append(f"- **FP** {f['case']} {f['time']:%m-%d %H:%M}Z at {f['lat']:.3f}, {f['lon']:.3f} "
+    for f in sorted(P["fp_detail"], key=lambda f: f["firms_corroborated"] > 0):
+        tag = (f"FIRMS-corroborated ({f['firms_corroborated']} pts), {f['nearest_known_km']} km from a known origin"
+               if f["firms_corroborated"] else "no FIRMS corroboration")
+        L.append(f"- **FP — {tag}** — {f['case']} {f['time']:%m-%d %H:%M}Z at {f['lat']:.3f}, {f['lon']:.3f} "
                  f"(+{f['max_ddt_k']} K): {f['rationale']}" + (f" ![]({f['gallery']})" if f.get("gallery") else ""))
     with open(os.path.join(HERE, "results.md"), "w") as fh:
         fh.write("\n".join(L) + "\n")
