@@ -8,3 +8,5 @@ __pycache__/
 samconfig.toml
 eval/runs/
 eval/logs/
+.env.local
+.env*.local

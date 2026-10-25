@@ -63,7 +63,13 @@ plume attached, which way does it extend, does optical flow move it coherently t
 Rationales are generated from the gathered evidence (ΔT, scans with hotspot and their times,
 plume size/bearing/motion, FIRMS count and latest pass), never from fixed text.
 
-## Evaluation — TODO (see eval/results.md)
+## Evaluation — TODO (full table: eval/results.md)
+
+Headline (Lahaina afternoon fire, preliminary until the full eval run): **GOES review 41 min
+after the official first report (00:55Z → 01:36Z), ~6 h before the first polar-orbiter
+detection (MODIS, 07:50Z).** The first thermal anomaly appeared at 01:21Z but in a single scan
+only, so the agent re-checked rather than reviewed (2-scan persistence rule). Timing is measured
+against the first *report*, not against when people first noticed the fire.
 
 ## Limitations — TODO (Step 5), known so far
 

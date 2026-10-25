@@ -359,8 +359,11 @@ class BedrockPolicy:
                                         # params; adaptive thinking needs output room
                                         inferenceConfig={"maxTokens": 8000})
             out = resp["output"]["message"]   # appended unchanged: reasoning blocks must round-trip
-            self.usage.append({k: resp.get("usage", {}).get(k) for k in ("inputTokens", "outputTokens")}
-                              | {"stop": resp.get("stopReason"), "ms": resp.get("metrics", {}).get("latencyMs")})
+            u = resp.get("usage", {})
+            call = {"input_tokens": u.get("inputTokens"), "output_tokens": u.get("outputTokens"),
+                    "stop": resp.get("stopReason"), "latency_ms": resp.get("metrics", {}).get("latencyMs")}
+            self.usage.append(call)
+            ep.trace.append({"step": len(ep.trace) + 1, "actor": self.name, "llm_call": call})
             msgs.append(out)
             uses = [c["toolUse"] for c in out["content"] if "toolUse" in c]
             if not uses:
@@ -389,6 +392,16 @@ def make_policy(name: str | None = None):
     return BedrockPolicy() if name == "bedrock" else RulePolicy()
 
 
+def _llm_totals(trace: list[dict]) -> dict | None:
+    calls = [t["llm_call"] for t in trace if "llm_call" in t]
+    if not calls:
+        return None
+    return {"calls": len(calls),
+            "input_tokens": sum(c["input_tokens"] or 0 for c in calls),
+            "output_tokens": sum(c["output_tokens"] or 0 for c in calls),
+            "latency_ms": sum(c["latency_ms"] or 0 for c in calls)}
+
+
 def run_scan(frame: Frame, frame_source: FrameSource, store, policy=None,
              background: fire.Background | None = None, fetch_background: bool = True) -> dict:
     """fetch_background=False: use only `background` (live mode fetches it under a deadline)."""
@@ -407,6 +420,7 @@ def run_scan(frame: Frame, frame_source: FrameSource, store, policy=None,
         "policy": policy.name, "daytime": vision.is_daytime(frame),
         "background_scans": ep.bg.n_refs if ep.bg else 0, "errors": ep.errors,
         "anomaly_px": int(ep.fire.sum()),
+        "llm_usage": _llm_totals(ep.trace),
         "candidates": len(ep.dets), "outcomes": ep.outcome, "evidence": ep.evidence,
         "trace": ep.trace,
     }

@@ -5,6 +5,8 @@
 set -u
 cd "$(dirname "$0")/.."
 PY=.venv/bin/python
+# local secrets (e.g. FIRMS_MAP_KEY for NOAA-20 in the polar comparison); gitignored
+if [ -f .env.local ]; then set -a; . ./.env.local; set +a; fi
 export FIRMS_ARCHIVE_DIR=${FIRMS_ARCHIVE_DIR:-.cache/firms}
 mkdir -p eval/logs
 EVENTS=lahaina_pm,olinda,kula,lahaina_am,pulehu,kohala_ranch,mauna_kea_resort

@@ -36,7 +36,7 @@ Conditions:
 Globals:
   Function:
     Architectures: [x86_64]
-    MemorySize: 3008
+    MemorySize: 1536   # live scan peaks at ~0.6 GB
     Timeout: 300
     EphemeralStorage:
       Size: 2048

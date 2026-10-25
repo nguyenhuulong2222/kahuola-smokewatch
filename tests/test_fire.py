@@ -113,3 +113,39 @@ def test_thin_background_skips_detection(tmp_path):
     cur = scene(T0, fire_px=(110, 95))
     ep = agent.Episode(cur, lambda t: cur, LocalStore(str(tmp_path)), [], bg)
     assert ep.dets == [] and "bootstrapping" in ep.errors[0]
+
+
+class _FakeBedrock:
+    """Converse stub: track, then review, then stop. Records request kwargs."""
+
+    def __init__(self):
+        self.requests, self.n = [], 0
+
+    def converse(self, **kw):
+        self.requests.append(kw)
+        self.n += 1
+        if self.n == 1:
+            content = [{"toolUse": {"toolUseId": "t1", "name": "track_plume",
+                                    "input": {"det_id": 1, "minutes_back": 10}}}]
+        elif self.n == 2:
+            content = [{"toolUse": {"toolUseId": "t2", "name": "request_human_review",
+                                    "input": {"det_id": 1, "confidence": 0.8,
+                                              "rationale": "+30 K, 3/3 scans"}}}]
+        else:
+            content = [{"text": "done"}]
+        return {"output": {"message": {"role": "assistant", "content": content}},
+                "usage": {"inputTokens": 1000 * self.n, "outputTokens": 50},
+                "stopReason": "tool_use" if self.n < 3 else "end_turn", "metrics": {"latencyMs": 900}}
+
+
+def test_bedrock_policy_records_usage_and_sends_no_sampling_params(tmp_path):
+    pol = agent.BedrockPolicy.__new__(agent.BedrockPolicy)
+    pol.model_id, pol.client, pol.usage = "us.anthropic.claude-sonnet-5-5", _FakeBedrock(), []
+    ep = _episode(store=LocalStore(str(tmp_path)))
+    pol.run(ep)
+    assert ep.outcome[1]["action"] == "request_human_review"
+    assert all("temperature" not in r["inferenceConfig"] for r in pol.client.requests)
+    calls = [t["llm_call"] for t in ep.trace if "llm_call" in t]
+    assert len(calls) == 2 and calls[0]["input_tokens"] == 1000 and calls[0]["latency_ms"] == 900
+    assert agent._llm_totals(ep.trace) == {"calls": 2, "input_tokens": 3000, "output_tokens": 100,
+                                           "latency_ms": 1800}
