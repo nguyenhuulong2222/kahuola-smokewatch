@@ -1,0 +1,358 @@
+{
+  "llm": "anthropic",
+  "model_id": "claude-sonnet-5-5",
+  "scans": [
+    {
+      "time": "2023-08-09T01:21:17+00:00",
+      "candidates": {
+        "1": {
+          "id": 1,
+          "centroid": [
+            -156.67,
+            20.88
+          ],
+          "bbox": [
+            -156.68,
+            20.86,
+            -156.64,
+            20.88
+          ],
+          "hot_px": 2,
+          "max_ddt_k": 12.1,
+          "max_d7_k": 15.7,
+          "max_t7_k": 326.9,
+          "volcanic": null,
+          "smoke": null
+        },
+        "2": {
+          "id": 2,
+          "centroid": [
+            -156.3,
+            20.82
+          ],
+          "bbox": [
+            -156.3,
+            20.8,
+            -156.28,
+            20.82
+          ],
+          "hot_px": 1,
+          "max_ddt_k": 8.8,
+          "max_d7_k": 7.7,
+          "max_t7_k": 314.4,
+          "volcanic": null,
+          "smoke": null
+        }
+      },
+      "rules": {
+        "seconds": 0.6,
+        "outcomes": {
+          "1": {
+            "action": "schedule_recheck",
+            "confidence": null,
+            "rationale": "Hotspot at 20.880N 156.670W: 2 px, \u0394(3.9\u221211.2 \u00b5m) +12.1 K vs same time on previous days; present in 1/3 scans over 10 min (01:21Z); no smoke plume attached; single-scan hotspot \u2014 wait for confirmation"
+          },
+          "2": {
+            "action": "request_human_review",
+            "confidence": 0.75,
+            "rationale": "Hotspot at 20.820N 156.300W: 1 px, \u0394(3.9\u221211.2 \u00b5m) +8.8 K vs same time on previous days; present in 3/3 scans over 10 min (01:11Z, 01:16Z, 01:21Z); no smoke plume attached; FIRMS: 71 VIIRS/MODIS detections in prior 24 h, nearest 0.2 km, latest 00:36Z"
+          }
+        },
+        "tools": [
+          "track_plume(1)",
+          "schedule_recheck(1)",
+          "track_plume(2)",
+          "query_firms(2)",
+          "request_human_review(2)"
+        ],
+        "fallback": [],
+        "usage": null
+      },
+      "anthropic": {
+        "seconds": 6.2,
+        "outcomes": {
+          "1": {
+            "action": "schedule_recheck",
+            "confidence": null,
+            "rationale": "Hotspot in only 1 of 3 scans (01:21Z only), \u0394T 12.1 K, no attached plume. Possible noise; recheck next scan."
+          },
+          "2": {
+            "action": "request_human_review",
+            "confidence": 0.8,
+            "rationale": "Hotspot persisted in 3/3 scans (01:11\u201301:21Z), \u0394T 8.8 K, d7 7.7 K, T7 314.4 K. FIRMS: 71 detections within 5 km, nearest 0.2 km. No attached smoke plume observed."
+          }
+        },
+        "tools": [
+          "track_plume(1)",
+          "track_plume(2)",
+          "schedule_recheck(1)",
+          "query_firms(2)",
+          "request_human_review(2)"
+        ],
+        "fallback": [],
+        "usage": [
+          {
+            "input_tokens": 2042,
+            "output_tokens": 181,
+            "stop": "tool_use",
+            "latency_ms": 2036
+          },
+          {
+            "input_tokens": 2531,
+            "output_tokens": 176,
+            "stop": "tool_use",
+            "latency_ms": 2091
+          },
+          {
+            "input_tokens": 2875,
+            "output_tokens": 192,
+            "stop": "tool_use",
+            "latency_ms": 2018
+          }
+        ]
+      }
+    },
+    {
+      "time": "2023-08-09T01:36:17+00:00",
+      "candidates": {
+        "1": {
+          "id": 1,
+          "centroid": [
+            -156.67,
+            20.88
+          ],
+          "bbox": [
+            -156.68,
+            20.86,
+            -156.64,
+            20.88
+          ],
+          "hot_px": 2,
+          "max_ddt_k": 10.5,
+          "max_d7_k": 13.4,
+          "max_t7_k": 324.3,
+          "volcanic": null,
+          "smoke": null
+        },
+        "2": {
+          "id": 2,
+          "centroid": [
+            -156.3,
+            20.82
+          ],
+          "bbox": [
+            -156.3,
+            20.8,
+            -156.28,
+            20.82
+          ],
+          "hot_px": 1,
+          "max_ddt_k": 9.1,
+          "max_d7_k": 8.1,
+          "max_t7_k": 313.8,
+          "volcanic": null,
+          "smoke": null
+        },
+        "3": {
+          "id": 3,
+          "centroid": [
+            -155.832,
+            20.016
+          ],
+          "bbox": [
+            -155.84,
+            19.98,
+            -155.8,
+            20.04
+          ],
+          "hot_px": 5,
+          "max_ddt_k": 24.1,
+          "max_d7_k": 24.6,
+          "max_t7_k": 335.8,
+          "volcanic": null,
+          "smoke": null
+        }
+      },
+      "rules": {
+        "seconds": 0.1,
+        "outcomes": {
+          "1": {
+            "action": "request_human_review",
+            "confidence": 0.6,
+            "rationale": "Hotspot at 20.880N 156.670W: 2 px, \u0394(3.9\u221211.2 \u00b5m) +10.5 K vs same time on previous days; present in 3/3 scans over 10 min (01:26Z, 01:31Z, 01:36Z); no smoke plume attached; FIRMS: no VIIRS/MODIS detection in prior 24 h (GOES ahead of polar passes)"
+          },
+          "2": {
+            "action": "request_human_review",
+            "confidence": 0.75,
+            "rationale": "Hotspot at 20.820N 156.300W: 1 px, \u0394(3.9\u221211.2 \u00b5m) +9.1 K vs same time on previous days; present in 3/3 scans over 10 min (01:26Z, 01:31Z, 01:36Z); no smoke plume attached; FIRMS: 71 VIIRS/MODIS detections in prior 24 h, nearest 0.2 km, latest 00:36Z"
+          },
+          "3": {
+            "action": "request_human_review",
+            "confidence": 0.85,
+            "rationale": "Hotspot at 20.016N 155.832W: 5 px, \u0394(3.9\u221211.2 \u00b5m) +24.1 K vs same time on previous days; present in 3/3 scans over 10 min (01:26Z, 01:31Z, 01:36Z); no smoke plume attached; FIRMS: 34 VIIRS/MODIS detections in prior 24 h, nearest 6.6 km, latest 23:45Z"
+          }
+        },
+        "tools": [
+          "track_plume(1)",
+          "query_firms(1)",
+          "request_human_review(1)",
+          "track_plume(2)",
+          "query_firms(2)",
+          "request_human_review(2)",
+          "track_plume(3)",
+          "query_firms(3)",
+          "request_human_review(3)"
+        ],
+        "fallback": [],
+        "usage": null
+      },
+      "anthropic": {
+        "seconds": 7.3,
+        "outcomes": {
+          "1": {
+            "action": "request_human_review",
+            "confidence": 0.45,
+            "rationale": "Hotspot in 3/3 scans, \u0394T 10.5 K (3.9\u00b5m rise 13.4 K, 324.3 K), 2 px. No attached plume observed; FIRMS count 0. Persistent but weaker evidence."
+          },
+          "2": {
+            "action": "request_human_review",
+            "confidence": 0.7,
+            "rationale": "Hotspot in 3/3 scans, \u0394T 9.1 K, 1 px, 313.8 K. No attached plume; FIRMS 71 detections, nearest 0.2 km, latest 00:36Z. Supports active fire."
+          },
+          "3": {
+            "action": "request_human_review",
+            "confidence": 0.7,
+            "rationale": "Hotspot in 3/3 scans, \u0394T 24.1 K (3.9\u00b5m rise 24.6 K, 335.8 K), 5 px. No attached plume; FIRMS 34 detections, nearest 6.6 km (beyond 5 km?), latest 23:45Z."
+          }
+        },
+        "tools": [
+          "track_plume(1)",
+          "track_plume(2)",
+          "track_plume(3)",
+          "query_firms(1)",
+          "query_firms(2)",
+          "query_firms(3)",
+          "request_human_review(1)",
+          "request_human_review(2)",
+          "request_human_review(3)"
+        ],
+        "fallback": [],
+        "usage": [
+          {
+            "input_tokens": 2175,
+            "output_tokens": 219,
+            "stop": "tool_use",
+            "latency_ms": 1895
+          },
+          {
+            "input_tokens": 2853,
+            "output_tokens": 144,
+            "stop": "tool_use",
+            "latency_ms": 1556
+          },
+          {
+            "input_tokens": 3303,
+            "output_tokens": 544,
+            "stop": "tool_use",
+            "latency_ms": 3723
+          }
+        ]
+      }
+    },
+    {
+      "time": "2023-08-08T10:31:17+00:00",
+      "candidates": {},
+      "rules": {
+        "seconds": 0.0,
+        "outcomes": {},
+        "tools": [],
+        "fallback": [],
+        "usage": null
+      },
+      "anthropic": {
+        "seconds": 0.0,
+        "outcomes": {},
+        "tools": [],
+        "fallback": [],
+        "usage": []
+      }
+    },
+    {
+      "time": "2023-08-08T11:21:17+00:00",
+      "candidates": {
+        "1": {
+          "id": 1,
+          "centroid": [
+            -156.3,
+            20.82
+          ],
+          "bbox": [
+            -156.3,
+            20.8,
+            -156.28,
+            20.82
+          ],
+          "hot_px": 1,
+          "max_ddt_k": 7.5,
+          "max_d7_k": 12.6,
+          "max_t7_k": 299.0,
+          "volcanic": null,
+          "smoke": null
+        }
+      },
+      "rules": {
+        "seconds": 0.0,
+        "outcomes": {
+          "1": {
+            "action": "request_human_review",
+            "confidence": 0.53,
+            "rationale": "Hotspot at 20.820N 156.300W: 1 px, \u0394(3.9\u221211.2 \u00b5m) +7.5 K vs same time on previous days; present in 2/3 scans over 10 min (11:16Z, 11:21Z); night \u2014 smoke not observable; FIRMS: no VIIRS/MODIS detection in prior 24 h (GOES ahead of polar passes)"
+          }
+        },
+        "tools": [
+          "track_plume(1)",
+          "query_firms(1)",
+          "request_human_review(1)"
+        ],
+        "fallback": [],
+        "usage": null
+      },
+      "anthropic": {
+        "seconds": 6.0,
+        "outcomes": {
+          "1": {
+            "action": "request_human_review",
+            "confidence": 0.45,
+            "rationale": "Night; \u0394T 7.5 K (3.9\u00b5m rise 12.6 K, 299 K), hotspot in 2 of 3 scans (11:16, 11:21Z), 1 hot pixel. Smoke not observable at night. FIRMS: 0 detections within 5 km."
+          }
+        },
+        "tools": [
+          "track_plume(1)",
+          "query_firms(1)",
+          "request_human_review(1)"
+        ],
+        "fallback": [],
+        "usage": [
+          {
+            "input_tokens": 1909,
+            "output_tokens": 75,
+            "stop": "tool_use",
+            "latency_ms": 1924
+          },
+          {
+            "input_tokens": 2125,
+            "output_tokens": 50,
+            "stop": "tool_use",
+            "latency_ms": 1752
+          },
+          {
+            "input_tokens": 2217,
+            "output_tokens": 193,
+            "stop": "tool_use",
+            "latency_ms": 2218
+          }
+        ]
+      }
+    }
+  ]
+}

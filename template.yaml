@@ -17,8 +17,16 @@ Parameters:
     Description: Shared secret for POST /review (generate with `openssl rand -hex 24`).
   AgentPolicy:
     Type: String
-    AllowedValues: [rules, bedrock]
+    AllowedValues: [rules, bedrock, anthropic]
     Default: rules
+  AnthropicModelId:
+    Type: String
+    Default: claude-sonnet-5-5
+    Description: Model ID for AgentPolicy=anthropic (from the Models API list).
+  AnthropicKeyParam:
+    Type: String
+    Default: /smokewatch/anthropic_api_key
+    Description: SSM SecureString NAME holding the Anthropic API key (read at cold start; never in env).
   BedrockModelId:
     Type: String
     Default: ""
@@ -32,6 +40,7 @@ Conditions:
   UseBedrock: !And
     - !Equals [!Ref AgentPolicy, bedrock]
     - !Not [!Equals [!Ref BedrockModelId, ""]]
+  UseAnthropic: !Equals [!Ref AgentPolicy, anthropic]
 
 Globals:
   Function:
@@ -45,6 +54,7 @@ Globals:
         BUCKET: !Ref DataBucket
         AGENT_POLICY: !Ref AgentPolicy
         BEDROCK_MODEL_ID: !Ref BedrockModelId
+        ANTHROPIC_MODEL_ID: !Ref AnthropicModelId
         FIRMS_MAP_KEY: !Ref FirmsMapKey
 
 Resources:
@@ -95,6 +105,16 @@ Resources:
                   - !Sub arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/${BedrockModelId}
                   - !Sub arn:aws:bedrock:*::foundation-model/${BedrockFoundationModelId}
           - !Ref AWS::NoValue
+        - !If
+          - UseAnthropic
+          - Statement:
+              - Effect: Allow
+                Action: [ssm:GetParameter]   # SecureString under alias/aws/ssm: no KMS grant needed
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${AnthropicKeyParam}
+          - !Ref AWS::NoValue
+      Environment:
+        Variables:
+          ANTHROPIC_KEY_PARAM: !If [UseAnthropic, !Ref AnthropicKeyParam, ""]
       Events:
         Every10Min:
           Type: Schedule

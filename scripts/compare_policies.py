@@ -1,4 +1,7 @@
-"""Run RulePolicy and BedrockPolicy on the same replayed scans and compare decisions.
+"""Run RulePolicy and an LLM policy (bedrock | anthropic) on the same replayed scans.
+
+  ANTHROPIC_KEY_PARAM=/smokewatch/anthropic_api_key FIRMS_ARCHIVE_DIR=.cache/firms \\
+  python scripts/compare_policies.py --llm anthropic --time 2023-08-09T01:21Z ...
 
   BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-5-5 AWS_REGION=us-east-1 \\
   FIRMS_ARCHIVE_DIR=.cache/firms python scripts/compare_policies.py \\
@@ -28,8 +31,11 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--time", action="append", required=True)
     ap.add_argument("--cache", default="./.cache/goes")
-    ap.add_argument("--out", default="eval/policy_compare.json")
+    ap.add_argument("--out", default=None)
+    ap.add_argument("--llm", choices=["bedrock", "anthropic"], default="bedrock")
     a = ap.parse_args(argv)
+    a.out = a.out or f"eval/policy_compare_{a.llm}.json"
+    llm_cls = {"bedrock": agent.BedrockPolicy, "anthropic": agent.AnthropicPolicy}[a.llm]
 
     @functools.lru_cache(maxsize=64)
     def source(t):
@@ -40,7 +46,7 @@ def main(argv=None):
         frame = source(parse_time(ts))
         bg = fire.fetch_background(frame.time, source)
         res = {}
-        for pol in (agent.RulePolicy(), agent.BedrockPolicy()):
+        for pol in (agent.RulePolicy(), llm_cls()):
             with tempfile.TemporaryDirectory() as d:
                 t0 = time.time()
                 s = agent.run_scan(frame, source, LocalStore(d), pol, background=bg)
@@ -56,19 +62,20 @@ def main(argv=None):
         rows.append({"time": frame.time.isoformat(), "candidates": cands, **res})
         print(f"\n== {frame.time:%Y-%m-%d %H:%MZ}  ({len(cands)} candidates)")
         for k, h in cands.items():
-            r, b = res["rules"]["outcomes"].get(k, {}), res["bedrock"]["outcomes"].get(k, {})
+            r, b = res["rules"]["outcomes"].get(k, {}), res[a.llm]["outcomes"].get(k, {})
             flag = "same" if r.get("action") == b.get("action") else "DIFF"
             print(f"  #{k} {h['centroid']} +{h['max_ddt_k']}K {h['volcanic'] or ''}")
             print(f"     rules  : {r.get('action')} {r.get('confidence') or ''}")
-            print(f"     bedrock: {b.get('action')} {b.get('confidence') or ''}  [{flag}]")
+            print(f"     {a.llm:7s}: {b.get('action')} {b.get('confidence') or ''}  [{flag}]")
             print(f"       \"{b.get('rationale')}\"")
-        u = res["bedrock"]["usage"] or []
-        print(f"  bedrock: {len(u)} calls, in {sum(x['input_tokens'] or 0 for x in u)} / out "
-              f"{sum(x['output_tokens'] or 0 for x in u)} tokens, LLM {sum(x['latency_ms'] or 0 for x in u) / 1000:.1f} s, {res['bedrock']['seconds']} s, "
-              f"tools {res['bedrock']['tools']}" + (f", FALLBACK {res['bedrock']['fallback']}"
-                                                      if res["bedrock"]["fallback"] else ""))
+        L = res[a.llm]
+        u = L["usage"] or []
+        print(f"  {a.llm}: {len(u)} calls, in {sum(x['input_tokens'] or 0 for x in u)} / out "
+              f"{sum(x['output_tokens'] or 0 for x in u)} tokens, LLM {sum(x['latency_ms'] or 0 for x in u) / 1000:.1f} s, {L['seconds']} s, "
+              f"tools {L['tools']}" + (f", FALLBACK {L['fallback']}" if L["fallback"] else ""))
     with open(a.out, "w") as f:
-        json.dump({"model_id": os.environ.get("BEDROCK_MODEL_ID"), "scans": rows}, f, indent=2, default=str)
+        json.dump({"llm": a.llm, "model_id": getattr(llm_cls, "model_id", None) or os.environ.get(
+            "BEDROCK_MODEL_ID" if a.llm == "bedrock" else "ANTHROPIC_MODEL_ID", "claude-sonnet-5-5"), "scans": rows}, f, indent=2, default=str)
     print("\nwrote", a.out)
 
 

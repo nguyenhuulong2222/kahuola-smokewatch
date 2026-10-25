@@ -14,8 +14,9 @@ Safety rails (enforced in code, not prompt):
     (a single-scan hotspot can only be re-checked);
   * candidates inside a volcanic exclusion zone (Kīlauea, Mauna Loa) can never be reviewed.
 
-Two interchangeable policies: `RulePolicy` (deterministic, used for eval + fallback)
-and `BedrockPolicy` (Claude on Amazon Bedrock via the Converse tool-use API).
+Interchangeable policies: `RulePolicy` (deterministic, used for eval + fallback),
+`BedrockPolicy` (Claude on Amazon Bedrock via the Converse tool-use API) and
+`AnthropicPolicy` (Claude via the Anthropic Messages API; key from SSM SecureString).
 """
 from __future__ import annotations
 
@@ -25,6 +26,7 @@ import math
 import os
 import time
 import uuid
+from functools import lru_cache
 from types import SimpleNamespace
 from typing import Callable
 
@@ -292,7 +294,7 @@ class RulePolicy:
                 ep.call("dismiss", {"det_id": d.id, "rationale": explain(ev)}, self.name)
                 continue
             t = ep.call("track_plume", {"det_id": d.id, "minutes_back": 10}, self.name)
-            if "error" in t:
+            if t.get("error"):
                 ep.call("schedule_recheck", {"det_id": d.id,
                                              "rationale": f"tracking failed: {t['error']}"}, self.name)
                 continue
@@ -319,6 +321,9 @@ Rules:
 - If the hotspot persists (≥ 2 scans), call query_firms, then request_human_review. A smoke
   plume extending downwind and FIRMS detections raise confidence; their absence does not block
   review (polar satellites pass only a few times a day; GOES scans every 5 minutes).
+- Field glossary: max_ddt_k = rise of (3.9 µm − 11.2 µm) over the 3-day background;
+  max_d7_k = rise of the 3.9 µm channel alone (ABI C07) over that background;
+  max_t7_k = current 3.9 µm brightness temperature. There is no 7-day quantity.
 - You cannot publish. Never invent numbers: the rationale (≤ 40 words) must cite the tool
   outputs — ΔT, scans with hotspot, plume size/bearing, FIRMS count.
 """
@@ -335,17 +340,8 @@ class BedrockPolicy:
 
     @staticmethod
     def _tool_config():
-        tools = []
-        for t in TOOL_SPECS:
-            props, req = {}, []
-            for k, desc in t["params"].items():
-                typ = desc.split()[0]
-                props[k] = {"type": typ, "description": desc}
-                req.append(k)
-            tools.append({"toolSpec": {"name": t["name"], "description": t["description"],
-                                       "inputSchema": {"json": {"type": "object", "properties": props,
-                                                                "required": req}}}})
-        return {"tools": tools}
+        return {"tools": [{"toolSpec": {"name": n, "description": d, "inputSchema": {"json": s}}}
+                          for n, d, s in _tool_schemas()]}
 
     def run(self, ep: Episode, max_steps=24):
         msgs = [{"role": "user", "content": [{"text": "Observation:\n" + json.dumps(ep.observation())}]}]
@@ -375,9 +371,66 @@ class BedrockPolicy:
                 r = ep.call(u["name"], u["input"], self.name)
                 results.append({"toolResult": {"toolUseId": u["toolUseId"],
                                                "content": [{"json": r}],
-                                               **({"status": "error"} if "error" in r else {})}})
+                                               **({"status": "error"} if r.get("error") else {})}})
             msgs.append({"role": "user", "content": results})
         _finish(ep)  # step budget exhausted: anything still open is re-checked next scan
+
+
+@lru_cache(maxsize=1)
+def _anthropic_key() -> str | None:
+    """Read once per container (cold start). Only the parameter NAME is configuration."""
+    name = os.environ.get("ANTHROPIC_KEY_PARAM")
+    if not name:
+        return None   # SDK falls back to ANTHROPIC_API_KEY (local dev)
+    import boto3
+    return boto3.client("ssm").get_parameter(Name=name, WithDecryption=True)["Parameter"]["Value"]
+
+
+class AnthropicPolicy:
+    """Same tools, rails and loop as BedrockPolicy, over the Anthropic Messages API."""
+    name = "anthropic"
+
+    def __init__(self, model_id: str | None = None):
+        import anthropic
+        self.model_id = model_id or os.environ.get("ANTHROPIC_MODEL_ID", "claude-sonnet-5-5")
+        self.usage: list[dict] = []
+        self.client = anthropic.Anthropic(api_key=_anthropic_key(), timeout=60.0, max_retries=2)
+        self.tools = [{"name": n, "description": d, "input_schema": s} for n, d, s in _tool_schemas()]
+
+    def run(self, ep: Episode, max_steps=24):
+        msgs = [{"role": "user", "content": "Observation:\n" + json.dumps(ep.observation())}]
+        for _ in range(max_steps):
+            if not ep.observation()["unresolved"]:
+                return
+            t0 = time.time()
+            resp = self.client.messages.create(model=self.model_id, max_tokens=8000,
+                                               system=SYSTEM_PROMPT, tools=self.tools, messages=msgs)
+            call = {"input_tokens": resp.usage.input_tokens, "output_tokens": resp.usage.output_tokens,
+                    "stop": resp.stop_reason, "latency_ms": round((time.time() - t0) * 1000)}
+            self.usage.append(call)
+            ep.trace.append({"step": len(ep.trace) + 1, "actor": self.name, "llm_call": call})
+            msgs.append({"role": "assistant", "content": resp.content})   # unchanged: thinking round-trips
+            uses = [b for b in resp.content if b.type == "tool_use"]
+            if not uses:
+                msgs.append({"role": "user", "content":
+                             "Unresolved candidates remain: " + json.dumps(ep.observation()["unresolved"])})
+                continue
+            results = []
+            for u in uses:
+                r = ep.call(u.name, u.input, self.name)
+                results.append({"type": "tool_result", "tool_use_id": u.id, "content": json.dumps(r),
+                                **({"is_error": True} if r.get("error") else {})})
+            msgs.append({"role": "user", "content": results})
+        _finish(ep)
+
+
+def _tool_schemas():
+    out = []
+    for t in TOOL_SPECS:
+        props = {k: {"type": desc.split()[0], "description": desc} for k, desc in t["params"].items()}
+        out.append((t["name"], t["description"],
+                    {"type": "object", "properties": props, "required": list(props)}))
+    return out
 
 
 def _finish(ep: Episode):
@@ -389,7 +442,7 @@ def _finish(ep: Episode):
 
 def make_policy(name: str | None = None):
     name = (name or os.environ.get("AGENT_POLICY", "rules")).lower()
-    return BedrockPolicy() if name == "bedrock" else RulePolicy()
+    return {"bedrock": BedrockPolicy, "anthropic": AnthropicPolicy}.get(name, RulePolicy)()
 
 
 def _llm_totals(trace: list[dict]) -> dict | None:
