@@ -183,6 +183,18 @@ reviewer page is at `/review`.
 * No personal data is stored. No secrets in code, env files in git, or `samconfig.toml`
   (gitignored).
 
+## Access for judges
+
+The repository is private. The owner adds each judge as a read-only collaborator:
+
+```bash
+gh api -X PUT repos/nguyenhuulong2222/kahuola-smokewatch/collaborators/<github-username> -f permission=pull
+```
+
+(or GitHub → Settings → Collaborators → Add people). The live page needs no account: the
+`ReviewUrl` stack output. Approving reviews needs the reviewer token, which is shared
+separately on request.
+
 ## Data sources
 
 NOAA GOES-18 ABI L2 MCMIP (NOAA Open Data Dissemination, AWS). NASA FIRMS (VIIRS S-NPP,
