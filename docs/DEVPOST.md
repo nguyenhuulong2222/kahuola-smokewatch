@@ -1,8 +1,8 @@
 # Devpost submission — Kahu Ola SmokeWatch
 
-Fields in the order of the Devpost form. Numbers are from `REPORT.md` and
-`eval/results.md`. Wording rule: timings are "after the official first report", never
-"before humans".
+Fields in the order of the Devpost project form (overview → project details). Numbers are from
+`REPORT.md` and `eval/results.md`. Wording rule: timings are "after the official first report",
+never "before humans".
 
 ## Project name
 
@@ -13,15 +13,13 @@ Kahu Ola SmokeWatch
 GOES-18 wildfire watch for Hawaiʻi: OpenCV finds new heat every 5 min, a Claude agent gathers
 evidence, a human approves what is published. Lahaina: hours before the first polar satellite.
 
-## Links ("Try it out")
+## Thumbnail
 
-* Live page (prod): https://dgmg5co6ld62forty2ubtcwehy0uawnd.lambda-url.us-east-1.on.aws/
-* Lahaina replay, deep link:
-  https://dgmg5co6ld62forty2ubtcwehy0uawnd.lambda-url.us-east-1.on.aws/?date=2023-08-08&t=0136Z&region=maui#viewer
-* Code: https://github.com/nguyenhuulong2222/kahuola-smokewatch
-* Video: _(to be added)_ — video description must include: "Narration is AI-generated."
+`video/smokewatch-thumbnail.png` (1280×720; rebuilt by `video/tools/assemble.py`)
 
-## Inspiration
+## About the project
+
+### Inspiration
 
 On 8 August 2023 several wind-driven fires burned on Maui at the same time; the Lahaina fire
 killed 102 people. The satellites most people think of as fire detectors are polar orbiters.
@@ -30,7 +28,7 @@ almost 7 hours after it was reported. GOES-18 sees Hawaiʻi every 5 minutes, but
 its raw 2 km imagery around the clock. We wanted a watcher that never sleeps, and that never
 publishes anything a human has not checked.
 
-## What it does
+### What it does
 
 * Every 10 minutes it reads the newest GOES-18 scan and compares each land pixel with the same
   clock time on the 3 previous days. New 3.9 µm heat becomes a candidate. Kīlauea and Mauna
@@ -49,7 +47,7 @@ publishes anything a human has not checked.
 * The public page shows a Lahaina case study, a timeline viewer over every stored scan
   (true color, ΔT anomaly, FIRMS points), and the live status.
 
-## How we built it
+### How we built it
 
 * **OpenCV 5:**
   * `remap` reprojects the ABI fixed grid onto a 0.02° Hawaiʻi grid.
@@ -73,7 +71,7 @@ publishes anything a human has not checked.
   compared with the first detection by *any* polar orbiter (VIIRS S-NPP, VIIRS NOAA-20,
   MODIS).
 
-## Challenges we ran into
+### Challenges we ran into
 
 * **Smoke is invisible at 2 km.** Our first smoke-first detector had zero recall on Lahaina,
   so we anchored on heat and kept smoke as supporting evidence.
@@ -87,7 +85,7 @@ publishes anything a human has not checked.
 * **Honest timing:** we report against the official first report, and against any polar
   sensor, not just the slowest one.
 
-## Accomplishments that we're proud of
+### Accomplishments that we're proud of
 
 * **Lahaina afternoon fire:** review 41 minutes after the official first report, about 6 hours
   before the first polar-orbiter detection (MODIS).
@@ -98,7 +96,7 @@ publishes anything a human has not checked.
   agent cannot publish.
 * **Cost:** about $1 a month to run, plus a few cents of LLM per scan with a candidate.
 
-## What we learned
+### What we learned
 
 * At 2 km, heat is the signal, and persistence over 2–3 scans is the cheapest strong filter.
 * An LLM agent is not automatically better than the rules. On our cases Claude made the same
@@ -107,14 +105,14 @@ publishes anything a human has not checked.
 * Tested properly, a published contextual fire test (MODIS C6) removed every real false
   positive. It also cost a fire and delayed three, so we kept it off.
 
-## What's next
+### What's next
 
 * Add GOES-18 Fire Detection and Characterization (FDC) and VIIRS 375 m as agent tools.
 * Find a better perception signal for vog-day heating.
 * Bedrock once the account quota is enabled.
 * Seek a pilot of the reviewer workflow with county emergency management.
 
-## Limitations (also in REPORT.md)
+### Limitations (also in REPORT.md)
 
 * Missed the Lahaina morning and Kula fires, which were too small for a 2 km pixel.
 * The Pūlehu attribution is uncertain.
@@ -129,3 +127,15 @@ Data on AWS, NASA FIRMS, Claude (Anthropic API), Python
 
 Tags: `opencv` `aws-lambda` `amazon-s3` `amazon-eventbridge` `aws-sam` `amazon-ecr`
 `noaa-goes` `nasa-firms` `claude` `anthropic` `python`
+
+## "Try it out" links
+
+* https://dgmg5co6ld62forty2ubtcwehy0uawnd.lambda-url.us-east-1.on.aws/
+* https://dgmg5co6ld62forty2ubtcwehy0uawnd.lambda-url.us-east-1.on.aws/?date=2023-08-08&t=0136Z&region=maui#viewer
+* https://github.com/nguyenhuulong2222/kahuola-smokewatch
+
+## Video demo link
+
+https://youtu.be/ZwM0HbwoKGk
+
+(YouTube, unlisted, 3:59. The description says: "Narration is AI-generated.")

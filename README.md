@@ -16,6 +16,12 @@ evidence and a human who decides what is published.
   *"Ước tính tự động từ vệ tinh, không thay thế cảnh báo chính thức"* (automated satellite
   estimate, not a substitute for official warnings).
 
+## Demo video
+
+[https://youtu.be/ZwM0HbwoKGk](https://youtu.be/ZwM0HbwoKGk) (3:59, narration is AI-generated). It shows the Lahaina case study and the timeline
+viewer on the live page, the deployed image replaying the 01:36Z scan with Claude, a human
+approving the review, the architecture, and the evaluation. Rebuild: `video/tools/`.
+
 ![architecture](docs/architecture.svg)
 
 Details: [REPORT.md](REPORT.md) · agent flow: [docs/agent-workflow.svg](docs/agent-workflow.svg) ·

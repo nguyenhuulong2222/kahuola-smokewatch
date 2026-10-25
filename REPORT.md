@@ -2,6 +2,7 @@
 
 OpenCV AI Competition 2026 (AWS). Code, deploy and evaluation steps: [README.md](README.md).
 All evaluation numbers: [eval/results.md](eval/results.md).
+Demo video (3:59): https://youtu.be/ZwM0HbwoKGk
 
 ## Problem and users
 
