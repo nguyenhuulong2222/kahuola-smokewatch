@@ -313,6 +313,117 @@ async def svg_shot(br, name="s07"):
     print(name, f"{total:.1f}s", n, "frames", flush=True)
 
 
+# ---------------------------------------------------------------- human review (local)
+
+DEMO_TOKEN = "local-demo-token-not-a-real-secret"   # throwaway, local server only; typed into a password field
+
+
+async def review_shot(br, name="s06b"):
+    """Local review page on a fresh copy of the 01:36Z replay output: type the token (dots only),
+    Approve the Lahaina candidate, then show the public layer the handler now serves."""
+    import tempfile
+    import urllib.request
+    total = max(15.0, narr_len(name) + LEAD + TAIL)
+    store = tempfile.mkdtemp(prefix="sw_review_")
+    shutil.copytree(os.path.join(BUILD, "agent", "store"), store, dirs_exist_ok=True)
+    port = 8767
+    srv = subprocess.Popen([os.path.join(ROOT, ".venv", "bin", "python"), os.path.join(ROOT, "scripts", "serve_local.py")],
+                           env={**os.environ, "LOCAL_STORE": store, "REVIEW_TOKEN": DEMO_TOKEN, "PORT": str(port)},
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    base = f"http://127.0.0.1:{port}/"
+    try:
+        for _ in range(50):
+            try:
+                urllib.request.urlopen(base + "review", timeout=1)
+                break
+            except Exception:
+                await asyncio.sleep(0.2)
+        pg = await br.new_page(viewport={"width": 1536, "height": 864}, device_scale_factor=1.25, color_scheme="dark")
+        await pg.goto(base + "review", wait_until="networkidle")
+        banner = ("Local review page on the replay output — only a human can publish")
+        BAN = ("() => { const b = document.createElement('div'); b.id = '__ban'; b.textContent = %s;"
+               " Object.assign(b.style, {position:'fixed', left:0, right:0, top:0, zIndex:2147483645, padding:'14px 30px',"
+               " background:'#f2a900', color:'#111', font:'700 22px -apple-system,Helvetica,sans-serif', textAlign:'center'});"
+               " document.body.appendChild(b); document.body.style.paddingTop = '56px'; }") % json.dumps(banner)
+        await pg.evaluate(BAN)
+        await pg.evaluate(INIT)
+        rid = "-1"   # det 1 = Lahaina
+        card = {"sel": f"article.card:has(button[data-id$='{rid}'])"}
+        tok, appr = {"sel": "#tok"}, {"sel": f"button[data-id$='{rid}'][data-d=approve]"}
+        S = dict(dur=total, scroll=[(0, 0), (1.0, 0), (2.5, {**card, "off": -70})],
+                 cursor=[(0, [900, 400]), (2.6, {**card, "ax": 0.35, "ay": 0.35}), (5.0, {**card, "ax": 0.7, "ay": 0.55}),
+                         (6.2, tok), (8.6, tok), (9.2, appr), (10.6, appr)],
+                 hl=[(2.6, 6.0, card), (6.2, 8.8, tok), (9.0, 10.4, appr)])
+        k = total / 15.0
+        S["scroll"] = [(t * k, v) for t, v in S["scroll"]]
+        S["cursor"] = [(t * k, v) for t, v in S["cursor"]]
+        S["hl"] = [(a * k, b * k, q) for a, b, q in S["hl"]]
+        t_type0, t_type1, t_click, t_geo = 6.3 * k, 8.4 * k, 9.4 * k, 11.2 * k
+        d = os.path.join(BUILD, name + "_frames")
+        shutil.rmtree(d, ignore_errors=True)
+        os.makedirs(d)
+        n, prev_key, prev_file, typed, clicked, geo = round(total * FPS), None, None, 0, False, False
+        for f in range(n):
+            t = f / FPS
+            if t_type0 <= t and typed < len(DEMO_TOKEN):
+                want = min(len(DEMO_TOKEN), int(len(DEMO_TOKEN) * (t - t_type0) / (t_type1 - t_type0)) + 1)
+                if want > typed:
+                    await pg.evaluate(f"v => {{ document.getElementById('tok').value = v; window.__state = 'tok{want}'; }}",
+                                      DEMO_TOKEN[:want])
+                    typed = want
+            if t >= t_click and not clicked:
+                await pg.evaluate(f"() => document.querySelector(\"button[data-id$='{rid}'][data-d=approve]\").click()")
+                await pg.wait_for_function("() => /→ (published|rejected)|error:/.test(document.body.innerText)", timeout=10000)
+                await pg.evaluate("() => { window.__state = 'clicked'; }")
+                clicked = True
+                S["hl"].append((t_click + 0.2, t_geo, {"sel": "article.card .btns", "text": "published"}))
+            if t >= t_geo and not geo:   # the public layer, exactly as GET /public/smoke.geojson returns it
+                body = urllib.request.urlopen(base + "public/smoke.geojson", timeout=5).read().decode()
+                g, coords = json.loads(body), {}
+                for i, ft in enumerate(g.get("features", [])):   # coordinates on one line, 4 decimals
+                    c = json.loads(json.dumps(ft["geometry"]["coordinates"]), parse_float=lambda x: round(float(x), 4))
+                    coords[f"__C{i}__"] = json.dumps(c, separators=(",", ":"))
+                    ft["geometry"]["coordinates"] = f"__C{i}__"
+                pretty = json.dumps(g, indent=2, ensure_ascii=False)
+                for m, c in coords.items():
+                    pretty = pretty.replace(json.dumps(m), c)
+                await pg.set_content(
+                    "<!doctype html><html><body style='margin:0;background:#0f172a;color:#e2e8f0;font-family:-apple-system,Helvetica,sans-serif'>"
+                    "<div style='margin:76px 40px 0;padding:10px 16px;background:#1e293b;border-radius:10px;font:18px ui-monospace,Menlo,monospace;color:#94a3b8'>"
+                    f"GET {html.escape(base)}public/smoke.geojson</div>"
+                    "<pre id=geo style='margin:16px 40px;padding:20px 24px;background:#020617;border:1px solid #334155;border-radius:12px;"
+                    "font:15px/1.5 ui-monospace,Menlo,monospace;white-space:pre-wrap;max-height:640px;overflow:hidden'>"
+                    + html.escape(pretty) + "</pre></body></html>")
+                await pg.evaluate(BAN)
+                await pg.evaluate("() => { document.body.style.paddingTop = '0'; }")
+                await pg.evaluate(INIT)
+                await pg.evaluate("""() => { const pre = document.getElementById('geo');
+                  pre.innerHTML = pre.innerHTML.replace(/("disclaimer(_en)?": "[^\\n]*)/g, '<span class=__d>$1</span>')
+                                               .replace(/("status": "published")/, '<span class=__s>$1</span>'); }""")
+                S["scroll"].append((t, 0))
+                S["cursor"] += [(t, [1300, 700]), (t + 1.0, {"sel": ".__d", "ax": 0.9})]
+                S["hl"] = [(t + 0.3, total, {"sel": ".__d"}), (t + 1.2, total, {"sel": ".__s"})]
+                geo = True
+            sa, sb, sp = seg(S["scroll"], t)
+            ca, cb, cp = seg(S["cursor"], t)
+            hls = [max(0.0, min(1.0, (t - a) / 0.3, (b - t) / 0.3)) for a, b, _ in S["hl"]]
+            key = await pg.evaluate(FRAME, dict(sa=sa, sb=sb, sp=sp, ca=ca, cb=cb, cp=cp,
+                                                hl=[q for _, _, q in S["hl"]], hls=hls))
+            file = f"{d}/{f:05d}.jpg"
+            if key == prev_key:
+                os.link(prev_file, file)
+            else:
+                await pg.screenshot(path=file, type="jpeg", quality=93)
+                prev_key, prev_file = key, file
+        encode(d, os.path.join(CLIPS, name + ".mp4"))
+        shutil.rmtree(d)
+        await pg.close()
+        print(name, f"{total:.1f}s", n, "frames", flush=True)
+    finally:
+        srv.terminate()
+        shutil.rmtree(store, ignore_errors=True)
+
+
 async def main(only):
     os.makedirs(CLIPS, exist_ok=True)
     os.makedirs(BUILD, exist_ok=True)
@@ -325,6 +436,8 @@ async def main(only):
                 await web_shot(ctx, name, dict(S))
         if not only or "s06" in only:
             await agent_shot(br)
+        if not only or "s06b" in only:
+            await review_shot(br)
         if not only or "s07" in only:
             await svg_shot(br)
         await br.close()

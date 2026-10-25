@@ -2,11 +2,13 @@
 
   LOCAL_STORE=out/site python scripts/serve_local.py   ->  http://127.0.0.1:8765/
 
-/img/<key> images are served straight from the folder (in AWS a presigned-S3 redirect);
+/img/<key> images are served straight from the folder (in AWS a presigned-S3 redirect), and
+the review page's overlay images (file:// URLs from LocalStore) via /localfile/<key>;
 every other path goes through handler.http exactly as the Lambda Function URL would.
 """
 import mimetypes
 import os
+import re
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qsl, urlsplit
@@ -15,11 +17,23 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import handler  # noqa: E402
 
 ROOT = os.path.abspath(os.environ.get("LOCAL_STORE", "./out"))
+LOCALFILE = re.compile(r"^(reviews/img|latest)/[0-9A-Za-z_.-]{1,120}\.png$")
 
 
 class H(BaseHTTPRequestHandler):
     def _go(self, method):
         u = urlsplit(self.path)
+        if u.path.startswith("/localfile/"):   # LocalStore.url() gives file:// URLs; serve the review images
+            key = u.path[len("/localfile/"):]
+            p = os.path.abspath(os.path.join(ROOT, key))
+            if not LOCALFILE.match(key) or ".." in key or not p.startswith(ROOT) or not os.path.isfile(p):
+                self.send_error(404)
+                return
+            self.send_response(200)
+            self.send_header("content-type", mimetypes.guess_type(p)[0] or "application/octet-stream")
+            self.end_headers()
+            self.wfile.write(open(p, "rb").read())
+            return
         if u.path.startswith("/img/") and not u.path.endswith(".json"):   # JSON goes through handler, as in AWS
             key = u.path[5:]
             p = os.path.abspath(os.path.join(ROOT, key))
@@ -36,6 +50,8 @@ class H(BaseHTTPRequestHandler):
               "requestContext": {"http": {"method": method}},
               "body": self.rfile.read(n).decode() if n else None}
         r = handler.http(ev)
+        if r["headers"].get("content-type", "").startswith("text/html"):
+            r["body"] = r["body"].replace("file://" + ROOT + "/", "/localfile/")
         self.send_response(r["statusCode"])
         for k, v in r["headers"].items():
             self.send_header(k, v)

@@ -2,8 +2,8 @@
 
   video/.venv/bin/python video/tools/narration.py [s01 s02 ...]
 
-TTS: OpenAI gpt-4o-mini-tts (voice "marin") when OPENAI_API_KEY is in .env.local, otherwise the
-macOS voice in MAC_VOICE. Output: video/narr/<id>.wav (48 kHz mono, trimmed, loudness-normalised).
+TTS: OpenAI gpt-4o-mini-tts (voice "marin") when an OpenAI key is in .env.local or the macOS
+Keychain (service "openai-api-key"), otherwise the macOS voice in MAC_VOICE. Output: video/narr/<id>.wav (48 kHz mono, trimmed, loudness-normalised).
 Numbers follow REPORT.md; timings are "after the official first report", never "before humans".
 """
 import json
@@ -45,8 +45,9 @@ SEG = {
            "Anthropic API, calls track_plume: is the hotspot in the earlier scans, is there a "
            "plume? Then query_firms: has a polar satellite already seen it? Then it decides, "
            "with a rationale built from that evidence. The rails are in code: no review without "
-           "tracking, without two scans, or inside the volcanic mask. The agent can never "
-           "publish. Only a human reviewer can.",
+           "tracking, without two scans, or inside the volcanic mask.",
+    "s06b": "The agent can only queue. A human reviewer approves, and only then does the plume "
+            "reach the public layer.",
     "s07": "Under the hood, OpenCV 5 reprojects every scan, clusters hotspots with connected "
            "components, follows plumes with DIS optical flow, and renders every image and "
            "video you have seen. One container image runs two Lambda functions, triggered by "
@@ -78,13 +79,17 @@ def spoken(text: str) -> str:
 
 
 def openai_key() -> str | None:
+    """.env.local, else the macOS Keychain item "openai-api-key" (as in the earlier video
+    pipeline). Held in memory for this run only; never written to a file or printed."""
     try:
         for line in open(os.path.join(ROOT, ".env.local")):
             if line.startswith("OPENAI_API_KEY="):
                 return line.split("=", 1)[1].strip() or None
     except FileNotFoundError:
         pass
-    return None
+    r = subprocess.run(["security", "find-generic-password", "-s", "openai-api-key", "-w"],
+                       capture_output=True, text=True)
+    return r.stdout.strip() or None if r.returncode == 0 else None
 
 
 def tts(seg_id: str, key: str | None) -> str:
