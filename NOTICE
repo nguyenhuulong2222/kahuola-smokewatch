@@ -1,0 +1,10 @@
+Kahu Ola SmokeWatch
+Copyright 2026 Long Nguyen / Kahu Ola
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Third-party data:
+- smokewatch/data/land.png is rasterised from Natural Earth 10 m land (public domain).
+- GOES-18 ABI imagery (NOAA, public domain) and NASA FIRMS fire detections are fetched at
+  run time and are not redistributed here, except the small evaluation figures in
+  eval/failures/ that are rendered from GOES-18 data.

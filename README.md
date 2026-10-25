@@ -200,3 +200,8 @@ separately on request.
 NOAA GOES-18 ABI L2 MCMIP (NOAA Open Data Dissemination, AWS). NASA FIRMS (VIIRS S-NPP,
 NOAA-20, MODIS). Natural Earth 10 m land. Event times and locations: see the citations in
 `eval/cases.yaml`.
+
+## License
+
+Copyright 2026 Long Nguyen / Kahu Ola. Licensed under the [Apache License 2.0](LICENSE); see
+[NOTICE](NOTICE) for third-party data.

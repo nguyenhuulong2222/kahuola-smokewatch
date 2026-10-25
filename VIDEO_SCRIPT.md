@@ -20,62 +20,93 @@ report", never "before humans".
 
 ## Shot list
 
+**Where to film:** the public page, the timeline viewer and the live status are filmed on the **prod
+URL** (`PROD` = https://dgmg5co6ld62forty2ubtcwehy0uawnd.lambda-url.us-east-1.on.aws/). Only the agent replay and the review demo are local, because
+replaying on prod would put 2023 candidates into the live review queue.
+
+**On-screen caption for shot 8** (lower third, for the whole shot):
+> Local replay of the same container image — prod is not replayed to keep the live queue clean
+
+**Caption for shot 10:**
+> Local review page on the replay output — prod is not replayed to keep the live queue clean
+
 | # | Time | Shot | Source / action |
 |---|---|---|---|
-| 1 | 0:00 | Title card over the live page header | Prod `ReviewUrl` `/`, top of page |
-| 2 | 0:20 | Map of Maui with the four 8 Aug fires; the timeline bar with the "≈ 6 h 14 min" gap | Public page, case-study timeline |
-| 3 | 0:45 | Polar vs geostationary: the case-study timeline (report 14:55 → review 15:36 → MODIS 21:50 HST), then the slider ticks of one scan every 5 min | Public page, case-study timeline, then viewer `?date=2023-08-08&region=maui` |
-| 4 | 1:00 | `docs/architecture.svg` full screen, then zoom on the OpenCV box | Repo file in a browser |
-| 5 | 1:25 | ΔT anomaly layer toggled on/off on one scan; the colorbar with the 6 K tick | Viewer, `?date=2023-08-08&t=0136Z&region=maui` |
-| 6 | 1:45 | Case-study animation (MP4) from 22:00Z to 03:00Z | Public page, video card (or `events/media/lahaina-2023-08-08.mp4`) |
-| 7 | 2:10 | Pause on 01:21Z (yellow circle, re-check), step ▶| to 01:36Z (red circle, review) | Viewer, `?date=2023-08-08&t=0121Z&region=maui` |
-| 8 | 2:35 | Terminal: live replay with Claude (command A below); scroll the tool calls | Terminal, large font |
-| 9 | 3:05 | Trace card: Claude next to Rules for 01:36Z; then `docs/agent-trace-example.md` | Public page, trace card |
-| 10 | 3:30 | Local reviewer page: the Lahaina candidate (20.88 N 156.67 W, from the 01:36Z replay), overlay, Approve with the demo token; then `/public/smoke.geojson` showing the disclaimer | Command B below, `http://127.0.0.1:8765/review` |
-| 11 | 3:55 | Evaluation table | Public page, eval table (or `REPORT.md` → Evaluation) |
-| 12 | 4:15 | "Agent vs rules" paragraph highlighted | `REPORT.md` |
-| 13 | 4:30 | Failure gallery: missed Kula, a vog-day FP | `eval/failures/` images |
-| 14 | 4:50 | Live status card ("silence = good"), end card | Prod `/` |
+| 1 | 0:00 | Title card over the live page header | PROD `/`, top of page |
+| 2 | 0:20 | Map of Maui with the four 8 Aug fires; the timeline bar with the "≈ 6 h 14 min" gap | PROD `/`, case-study timeline |
+| 3 | 0:45 | Polar vs geostationary: report 14:55 → review 15:36 → MODIS 21:50 HST, then the slider ticks, one scan every 5 min | PROD `/`, case-study timeline, then PROD `/?date=2023-08-08&region=maui#viewer` |
+| 4 | 1:00 | `docs/architecture.svg` full screen, then zoom on the OpenCV box | Repo file on GitHub |
+| 5 | 1:25 | ΔT anomaly layer toggled on/off on one scan; the colorbar with the 6 K tick | PROD `/?date=2023-08-08&t=0136Z&region=maui#viewer` |
+| 6 | 1:45 | Case-study animation (MP4), 22:00Z → 03:00Z | PROD `/`, video card |
+| 7 | 2:10 | Pause on 01:21Z (yellow circle, re-check), step ▶\| to 01:36Z (red circle, review) | PROD `/?date=2023-08-08&t=0121Z&region=maui#viewer` |
+| 8 | 2:35 | Terminal: the deployed image replays 01:21Z and 01:36Z with Claude (command A); show the outcomes JSON and the `docker inspect` digest line. **Caption above.** | Local terminal, large font |
+| 9 | 3:05 | Trace card: Claude next to Rules for 01:36Z; then `docs/agent-trace-example.md` | PROD `/`, trace card |
+| 10 | 3:30 | Review page on the replay output: the Lahaina candidate (20.88 N 156.67 W), overlay, Approve with the demo token; then `/public/smoke.geojson` with the disclaimer. **Caption above.** | Command B, `http://127.0.0.1:8765/review` |
+| 11 | 3:55 | Evaluation table | PROD `/`, eval table |
+| 12 | 4:15 | "Agent vs rules" paragraph highlighted | `REPORT.md` on GitHub |
+| 13 | 4:30 | Failure gallery: missed Kula, a vog-day FP | `eval/failures/` on GitHub |
+| 14 | 4:50 | Live status card ("silence = good"), end card | PROD `/`, live status |
 
-## Demo commands (run before recording; all local, nothing touches prod)
+## Demo commands (run before recording; local only, nothing touches prod)
 
-Prerequisites: the repo venv, the GOES cache in `.cache/goes` (from the eval run), the FIRMS
-archive in `.cache/firms`, AWS credentials that can read `/smokewatch/anthropic_api_key`.
+Prerequisites: Docker; the deployed image (`sam build --use-buildkit` tags it `scanfunction:v1`);
+the GOES cache in `.cache/goes` and the FIRMS archive in `.cache/firms` (from the eval run);
+AWS credentials in `~/.aws` that can read `/smokewatch/anthropic_api_key`.
 
-**A. Live Lahaina replay with Claude** (~2 s for perception from cache, 5–12 s for the agent):
+**A. The deployed container image replays Lahaina with Claude.** The Lambda base image includes
+the Runtime Interface Emulator, so this calls the real `handler.scan`. No bucket is set, so the
+store is a local folder. The frames come from the mounted cache (no NOAA download).
 
 ```bash
-# 15:21 HST: single-scan anomaly -> the agent re-checks
-ANTHROPIC_KEY_PARAM=/smokewatch/anthropic_api_key FIRMS_ARCHIVE_DIR=.cache/firms \
-  .venv/bin/python scripts/run_local.py --time 2023-08-09T01:21Z --policy anthropic --out out/demo
+# show that the local image is the one deployed (same digest as the Lambda's ResolvedImageUri)
+docker inspect scanfunction:v1 --format '{{index .RepoDigests 0}}'
 
+rm -rf out/demo && mkdir -p out/demo
+docker run -d --name smokewatch-demo --platform linux/amd64 -p 9000:8080 \
+  -v "$PWD/.cache/goes:/tmp/goes" -v "$PWD/.cache/firms:/opt/firms:ro" \
+  -v "$PWD/out/demo:/opt/out" -v "$HOME/.aws:/root/.aws:ro" \
+  -e AWS_REGION=us-east-1 -e LOCAL_STORE=/opt/out -e FIRMS_ARCHIVE_DIR=/opt/firms \
+  -e AGENT_POLICY=anthropic -e ANTHROPIC_KEY_PARAM=/smokewatch/anthropic_api_key \
+  -e ANTHROPIC_MODEL_ID=claude-sonnet-5-5 \
+  scanfunction:v1 handler.scan
+
+# 15:21 HST: single-scan anomaly -> the agent re-checks Lahaina
+curl -s localhost:9000/2015-03-31/functions/function/invocations \
+  -d '{"time":"2023-08-09T01:21:00Z"}' | python3 -m json.tool
 # 15:36 HST: 3/3 scans -> the agent requests human review
-ANTHROPIC_KEY_PARAM=/smokewatch/anthropic_api_key FIRMS_ARCHIVE_DIR=.cache/firms \
-  .venv/bin/python scripts/run_local.py --time 2023-08-09T01:36Z --policy anthropic --out out/demo
+curl -s localhost:9000/2015-03-31/functions/function/invocations \
+  -d '{"time":"2023-08-09T01:36:00Z"}' | python3 -m json.tool
+
+docker rm -f smokewatch-demo
 ```
 
-Without network or key, use `--policy rules`: same decisions, deterministic rationale.
+For a run without network or key, use `-e AGENT_POLICY=rules`: same decisions, deterministic
+rationale.
 
-**B. Reviewer page on the replay output** (local store, demo-only token):
+**B. Review page on the replay output** (the same `handler.py` as in the image, served by
+`scripts/serve_local.py`; demo-only token):
 
 ```bash
 LOCAL_STORE=out/demo REVIEW_TOKEN=local-demo-token-not-a-real-secret \
   .venv/bin/python scripts/serve_local.py
-# open http://127.0.0.1:8765/review -> Approve with the token above
+# open http://127.0.0.1:8765/review -> Approve the Lahaina candidate with the token above
 # then http://127.0.0.1:8765/public/smoke.geojson (shows the disclaimer)
 ```
 
-Both commands were tested on 25 Oct 2026: at 01:21Z Claude re-checked Lahaina (1/3 scans) and
-queued the 3/3 Upcountry hotspot; Approve returned `published` and the layer carried the
-disclaimer.
+Tested on 25 Oct 2026 with image `sha256:6b6c5ab6…` (the digest deployed on the Lambda):
+* 01:21Z, 12.4 s: Claude re-checked Lahaina (1 of 3 scans) and queued the 3/3 Upcountry
+  hotspot.
+* 01:36Z, 8.9 s: three reviews, Lahaina among them. `errors: []`, no NOAA download.
+* Approve on the local review page returned `published`, and the layer carried the
+  disclaimer.
 
 Do **not** replay on the deployed Lambda (`aws lambda invoke … {"time": …}`): it would
-overwrite the live status and create real pending reviews.
+overwrite the live status and put real pending reviews in the live queue.
 
 ## Checklist before recording
 
-* Prod page loads on desktop and phone; viewer deep links above open at the right scan.
-* `out/demo` is empty before take 1 (`rm -rf out/demo`), so the review page shows only the
+* PROD page loads on desktop and phone; the viewer deep links above open at the right scan.
+* `out/demo` is recreated before take 1 (command A does it), so the review page shows only the
   replayed candidates.
-* Terminal font ≥ 18 pt; no `.env.local`, SSM values or tokens on screen (the demo token in
-  command B is a throwaway, local only).
+* Terminal font ≥ 18 pt. No `.env.local`, SSM values, AWS keys or tokens on screen. The demo
+  token in command B is a throwaway, local only.
