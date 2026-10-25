@@ -103,6 +103,33 @@ Cost and latency (Sonnet 5.5, $2 / $10 per M input / output tokens): scans with 
 used 3 model calls, 6.2–10.0 k input and 0.3–1.2 k output tokens. That is **$0.016–0.032 per
 scan** and 5–12 s of LLM time. Scans with no candidate make no model call (most live scans).
 
+## Experiment: contextual test (not enabled)
+
+The 12 real false positives are broad, low-amplitude warmings (Hawaiʻi Island by day, a vog
+day). Fires are compact and intense. We therefore tried the MODIS contextual fire test
+(Giglio et al. 2003, RSE 87:273–282; kept in Collection 6, Giglio et al. 2016) **with its
+published parameters, not tuned on our cases**:
+
+* window from 3×3 to 21×21 until ≥ 25 % / ≥ 8 valid pixels;
+* ΔT > mean + 3.5 δ, ΔT > mean + 6 K, T4 > mean + 3 δ (δ = mean absolute deviation);
+* applied to our background-differenced fields (ΔT → Δ(C07−C14), T4 → ΔC07).
+
+Decision rule fixed in advance: enable only if it removes real FPs **and** loses no fire
+and delays no first review.
+
+| | off (shipped) | on |
+|---|---|---|
+| Real (uncorroborated) FPs | 12 | 0 |
+| Negative-day scans with a false review | 6/19 | 0/19 |
+| Fires reviewed | 5/7 | 4/7 (North Kohala lost) |
+| First review later | — | Olinda +30 min (after VIIRS), Lahaina PM +20 min, Mauna Kea +10 min |
+
+It stays **off** (`FP["contextual"] = False`). At 2 km the fire's neighbouring pixels are
+already warm from blur and spread. For Olinda at 11:21Z the fire pixel is +7.5 K, and its
+neighbours are +4.8 and +5.0 K, so the contextual threshold rises to 8.9 K. The test
+penalises exactly the small, smeared fires we most want early. Full numbers:
+`eval/results.md`, "Contextual test".
+
 ## Evaluation — TODO (full table: eval/results.md)
 
 Headline (Lahaina afternoon fire, preliminary until the full eval run): **GOES review 41 min

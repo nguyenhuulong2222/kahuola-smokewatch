@@ -146,3 +146,23 @@ Experiment, **off by default**. `fire.contextual_test` adapts the MODIS contextu
 | Negative-day frames with a false review | 6/19 | 0/19 |
 
 **Decision rule** (fixed before the run): enable only if it removes real FPs AND loses no fire AND delays no first review. Result: real FPs 12 → 0; fires lost: North Kohala (Akoni Pule Hwy) fire, Hawaiʻi Island; first review later: Olinda fire (Upcountry Maui), Lahaina afternoon fire (rekindle, Kuʻialua St), Mauna Kea Resort / Kawaihae fires, Hawaiʻi Island. → **kept OFF**.
+
+## Agent vs rules (Claude Sonnet 5.5 via Anthropic API)
+
+Same frames, background and FIRMS archive for both policies; separate stores
+(`scripts/compare_policies.py --llm anthropic`). The prompt was not changed for this run.
+
+| Set | Scans | Candidates | Same action as rules | Real FPs that rules reviewed | LLM dismissed/re-checked |
+|---|---|---|---|---|---|
+| True fires (Lahaina 01:21Z, 01:36Z; Olinda 10:31Z, 11:21Z) | 4 | 6 | 6/6 | — | — |
+| Real-FP scans (vog 12–13 Sep ×3, Kauaʻi, clear, cloudy) | 6 | 18 | 18/18 | 9 | **0 of 9** |
+
+* `track_plume` was always called with `minutes_back` = 10, never 20.
+* The model's own confidence was 0.25–0.55 on the FPs and 0.40–0.80 on the true fires.
+  The ranges overlap, and confidence is not a gate.
+* Cost: 3 model calls per scan with candidates, 6.2–10.0 k input / 0.3–1.2 k output
+  tokens, $0.016–0.032 per scan ($2 / $10 per M tokens), 5–12 s of LLM time. Scans with no
+  candidate make no model call.
+
+Result: the LLM agent matches the rule policy. It does not reduce false positives.
+Files: `eval/policy_compare_anthropic.json`, `eval/policy_compare_anthropic_fp.json`.
